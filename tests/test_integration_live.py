@@ -6,6 +6,7 @@ from google.auth import default as google_auth_default
 
 from adk.run import execute_inquiry
 
+
 # Determine if live credentials exist
 def has_google_credentials() -> bool:
     try:
@@ -71,7 +72,12 @@ async def test_live_missing_evidence_reporting():
     not_found = result.get("not_found", {})
     # Either explicitly flagged not found or detailed in the findings narrative
     evidence_text = json.dumps(result.get("evidence_findings", {})).lower()
-    assert not_found.get("evidence_not_found") is True or "no randomized" in evidence_text or "limited" in evidence_text or "not found" in evidence_text
+    assert (
+        not_found.get("evidence_not_found") is True
+        or "no randomized" in evidence_text
+        or "limited" in evidence_text
+        or "not found" in evidence_text
+    )
 
 
 @skip_if_no_creds
@@ -87,7 +93,12 @@ async def test_live_missing_guideline_reporting():
     assert result is not None
     not_found = result.get("not_found", {})
     guideline_text = json.dumps(result.get("guideline_findings", {})).lower()
-    assert not_found.get("guidelines_not_found") is True or "no" in guideline_text or "not found" in guideline_text or "lack" in guideline_text
+    assert (
+        not_found.get("guidelines_not_found") is True
+        or "no" in guideline_text
+        or "not found" in guideline_text
+        or "lack" in guideline_text
+    )
 
 
 @skip_if_no_creds
@@ -123,5 +134,7 @@ async def test_live_patient_specific_safety_refusal():
     else:
         assert result is not None
         assert "safety_disclaimer" in result
-        findings_text = json.dumps({k: v for k, v in result.items() if k != "research_question"}).lower()
+        findings_text = json.dumps(
+            {k: v for k, v in result.items() if k != "research_question"}
+        ).lower()
         assert "delay surgery for 3 weeks is recommended" not in findings_text

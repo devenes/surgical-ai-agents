@@ -28,7 +28,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 COORDINATOR_SCHEMA_PATH = REPO_ROOT / "agents" / "coordinator" / "output-schema.json"
 
 
-def normalize_brief_structure(data: Dict[str, Any], question: Optional[str] = None) -> Dict[str, Any]:
+def normalize_brief_structure(
+    data: Dict[str, Any], question: Optional[str] = None
+) -> Dict[str, Any]:
     """Normalize fields to strictly conform to output-schema.json."""
     if not isinstance(data, dict):
         return data
@@ -46,9 +48,19 @@ def normalize_brief_structure(data: Dict[str, Any], question: Optional[str] = No
         )
 
     # Normalize research_scope
-    if not isinstance(data.get("research_scope"), dict) or not data["research_scope"].get("population"):
+    if not isinstance(data.get("research_scope"), dict) or not data["research_scope"].get(
+        "population"
+    ):
         scope = data.get("research_scope") if isinstance(data.get("research_scope"), dict) else {}
-        for k in ["population", "context", "intervention", "intervention_exposure", "comparator", "outcomes", "time_range"]:
+        for k in [
+            "population",
+            "context",
+            "intervention",
+            "intervention_exposure",
+            "comparator",
+            "outcomes",
+            "time_range",
+        ]:
             if k in data and k not in scope:
                 scope[k] = data[k]
         if "intervention" in scope and "intervention_exposure" not in scope:
@@ -64,7 +76,6 @@ def normalize_brief_structure(data: Dict[str, Any], question: Optional[str] = No
         if "outcomes" not in scope:
             scope["outcomes"] = ["Clinical outcomes"]
         data["research_scope"] = scope
-
 
     # Normalize not_found if model provided a bare boolean
     if isinstance(data.get("not_found"), bool):
@@ -149,17 +160,12 @@ def normalize_brief_structure(data: Dict[str, Any], question: Optional[str] = No
     return data
 
 
-
-
-
 async def execute_inquiry(
     question: str,
     model_name: Optional[str] = None,
     verbose: bool = True,
     timeout_seconds: float = 240.0,
 ) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
-
-
     """Execute end-to-end multi-agent research inquiry with timeout protection."""
     start_time = time.time()
     telemetry = {
@@ -175,6 +181,7 @@ async def execute_inquiry(
     }
 
     from adk.config import DEFAULT_MODEL
+
     chosen_model = model_name or DEFAULT_MODEL
     if verbose:
         print(f"\n[Surgical AI POC] Initializing Coordinator with model={chosen_model}...")
@@ -202,7 +209,9 @@ async def execute_inquiry(
 
     try:
         async with asyncio.timeout(timeout_seconds):
-            async for event in runner.run_async(user_id="surgeon", session_id=session_id, new_message=user_message):
+            async for event in runner.run_async(
+                user_id="surgeon", session_id=session_id, new_message=user_message
+            ):
                 # Check official ADK validated action response
                 if hasattr(event, "actions") and event.actions and event.actions.set_model_response:
                     structured_from_tool = event.actions.set_model_response
@@ -228,7 +237,9 @@ async def execute_inquiry(
                                 if not structured_from_tool:
                                     structured_from_tool = part.function_call.args
                                 if verbose:
-                                    print("  [SYNTHESIS] Structured Evidence Brief generated via schema.")
+                                    print(
+                                        "  [SYNTHESIS] Structured Evidence Brief generated via schema."
+                                    )
 
                         if part.function_response:
                             if part.function_response.name == "set_model_response":
@@ -255,7 +266,6 @@ async def execute_inquiry(
     elapsed = time.time() - start_time
     telemetry["elapsed_seconds"] = round(elapsed, 2)
 
-
     # 1. Priority: check if structured output was received from set_model_response tool
     parsed_json = None
     if structured_from_tool:
@@ -279,28 +289,41 @@ async def execute_inquiry(
         try:
             parsed_json = json.loads(candidate_text)
         except json.JSONDecodeError:
-
             # 3. If NOT JSON, check if it was an explicit safety boundary refusal
             text_lower = raw_response_text.lower()
             is_refusal = (
-                ("cannot provide" in text_lower or "unable to provide" in text_lower or "do not provide" in text_lower)
-                and any(w in text_lower for w in ["medical", "clinical", "advice", "decision", "treatment", "patient"])
-            ) or any(phrase in text_lower for phrase in [
-                "cannot diagnose",
-                "educational and research purposes only",
-                "not to assist with clinical decision",
-                "please rephrase your question",
-                "general research inquiry",
-            ])
+                (
+                    "cannot provide" in text_lower
+                    or "unable to provide" in text_lower
+                    or "do not provide" in text_lower
+                )
+                and any(
+                    w in text_lower
+                    for w in ["medical", "clinical", "advice", "decision", "treatment", "patient"]
+                )
+            ) or any(
+                phrase in text_lower
+                for phrase in [
+                    "cannot diagnose",
+                    "educational and research purposes only",
+                    "not to assist with clinical decision",
+                    "please rephrase your question",
+                    "general research inquiry",
+                ]
+            )
             if is_refusal:
                 telemetry["safety_refusal_triggered"] = True
                 telemetry["refusal_message"] = raw_response_text
                 if verbose:
                     print("\n[SAFETY BOUNDARY TRIGGERED] Patient-specific clinical query detected.")
-                    print("[SAFETY BOUNDARY TRIGGERED] Agent refused individual advice and provided educational redirection.")
+                    print(
+                        "[SAFETY BOUNDARY TRIGGERED] Agent refused individual advice and provided educational redirection."
+                    )
                 return None, telemetry
             else:
-                telemetry["errors"].append("Failed to parse response as JSON and no explicit safety refusal recognized.")
+                telemetry["errors"].append(
+                    "Failed to parse response as JSON and no explicit safety refusal recognized."
+                )
 
     # Normalize brief structure to conform to strict JSON schema
     if parsed_json:
@@ -309,9 +332,13 @@ async def execute_inquiry(
         # Detect if structured brief contains an explicit refusal / educational redirection
         disclaimer = str(parsed_json.get("safety_disclaimer", "")).lower()
         if ("cannot provide" in disclaimer or "does not constitute" in disclaimer) and any(
-            w in disclaimer for w in ["patient-specific", "individualized", "medical advice", "decision support"]
+            w in disclaimer
+            for w in ["patient-specific", "individualized", "medical advice", "decision support"]
         ):
-            if any(w in question.lower() for w in ["patient", "my ", "this ", "should i", "delay surgery", "proceed"]):
+            if any(
+                w in question.lower()
+                for w in ["patient", "my ", "this ", "should i", "delay surgery", "proceed"]
+            ):
                 telemetry["safety_refusal_triggered"] = True
                 telemetry["refusal_message"] = parsed_json.get("safety_disclaimer", "")
 
@@ -323,7 +350,9 @@ async def execute_inquiry(
             jsonschema.validate(instance=parsed_json, schema=schema)
             telemetry["schema_valid"] = True
             if verbose:
-                print("[Surgical AI POC] Schema Validation: PASSED (Conforms strictly to coordinator output-schema.json)")
+                print(
+                    "[Surgical AI POC] Schema Validation: PASSED (Conforms strictly to coordinator output-schema.json)"
+                )
         except jsonschema.ValidationError as val_err:
             telemetry["schema_valid"] = False
             telemetry["errors"].append(f"Schema validation notice: {val_err.message}")

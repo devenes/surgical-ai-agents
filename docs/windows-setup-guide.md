@@ -188,14 +188,19 @@ If you wish to run live queries against Vertex AI on Google Cloud:
 To run the offline unit test suite on Windows without consuming any API tokens:
 
 ```powershell
-# Run the entire offline test suite (31 tests)
+# Run the entire offline test suite (36 unit tests)
 uv run pytest
 
-# Run only the Web UI unit tests
+# Run only the Web UI & Comparative Benchmark unit tests
 uv run pytest tests/test_unit_app_*.py -v
 ```
 
-All 31 offline tests pass deterministically in under 2 seconds.
+All 36 offline tests pass deterministically in under 2 seconds with **0 API tokens consumed**. This tests:
+- Multimodal image feature extraction simulation
+- 2-Subagent consensus orchestration pipeline
+- PICOT decomposition logic
+- Head-to-head comparative analysis (`/api/agents/compare`) across all 8 clinical benchmark cases
+- Clinical safety guardrails (verifying non-diagnostic refusal of patient-specific advice)
 
 ---
 

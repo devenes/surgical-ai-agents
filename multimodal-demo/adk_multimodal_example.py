@@ -26,12 +26,12 @@ from google.genai import types
 
 # Default project configuration configurable via environment
 DEFAULT_PROJECT: Optional[str] = os.environ.get("GOOGLE_CLOUD_PROJECT")
-DEFAULT_LOCATION: str = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get("GOOGLE_CLOUD_REGION", "us")
+DEFAULT_LOCATION: str = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get(
+    "GOOGLE_CLOUD_REGION", "us"
+)
 DEFAULT_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
-DEFAULT_IMAGE_PATH = (
-    Path(__file__).resolve().parent / "assets" / "laparoscopic_cvs_schematic.png"
-)
+DEFAULT_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "laparoscopic_cvs_schematic.png"
 
 DEFAULT_PROMPT = (
     "Describe only the observable visual anatomical and operative features in this image. "

@@ -3,7 +3,13 @@
 from typing import Any, Dict, List, Optional
 import streamlit as st
 
-from app.backend.schemas import ModelInfo, SubAgentExecutionStep
+from app.backend.schemas import (
+    ComparativeAuditScorecard,
+    ModelInfo,
+    MonolithicDirectResponse,
+    MultiAgentConsensusResponse,
+    SubAgentExecutionStep,
+)
 
 
 def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
@@ -133,11 +139,13 @@ def render_execution_timeline(steps: List[SubAgentExecutionStep]) -> None:
     cols = st.columns(len(steps)) if steps else []
     for i, step in enumerate(steps):
         with cols[i]:
-            status_icon = "✅" if step.status == "completed" else ("⏭️" if step.status == "skipped" else "⏳")
+            status_icon = (
+                "✅" if step.status == "completed" else ("⏭️" if step.status == "skipped" else "⏳")
+            )
             st.markdown(
                 f"""
                 <div style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #fafafa; margin-bottom: 8px;">
-                    <div style="font-weight: 600; font-size: 0.9em;">{status_icon} Step {i+1}</div>
+                    <div style="font-weight: 600; font-size: 0.9em;">{status_icon} Step {i + 1}</div>
                     <div style="color: #0366d6; font-size: 0.85em;">{step.agent_name}</div>
                     <div style="font-size: 0.75em; color: #666;">{step.duration_ms:.0f} ms</div>
                 </div>
@@ -147,7 +155,9 @@ def render_execution_timeline(steps: List[SubAgentExecutionStep]) -> None:
 
     with st.expander("🔍 View Detailed Step Logs", expanded=False):
         for step in steps:
-            st.markdown(f"**{step.agent_name}** (`{step.step_type}`) — *{step.status}* ({step.duration_ms:.1f}ms)")
+            st.markdown(
+                f"**{step.agent_name}** (`{step.step_type}`) — *{step.status}* ({step.duration_ms:.1f}ms)"
+            )
             st.caption(step.summary)
             if step.details:
                 st.json(step.details)
@@ -188,9 +198,7 @@ def render_consensus_matrix(matrix: Dict[str, Any]) -> None:
             st.caption("No critical limitations reported.")
 
 
-def render_evidence_vs_guidelines(
-    evidence: Dict[str, Any], guidelines: Dict[str, Any]
-) -> None:
+def render_evidence_vs_guidelines(evidence: Dict[str, Any], guidelines: Dict[str, Any]) -> None:
     """Render side-by-side comparison of empirical literature vs society guidelines."""
     st.markdown("### 📑 Side-by-Side Specialist Findings")
 
@@ -244,3 +252,136 @@ def render_evidence_vs_guidelines(
                     st.divider()
         else:
             st.caption("No individual society guidelines extracted.")
+
+
+def get_case_type_badge(case_type: str) -> str:
+    """Return an emoji and label for a clinical case category."""
+    mapping = {
+        "normal_synthesis": "📘 Normal Evidence Synthesis",
+        "missing_evidence": "🔍 Edge: Missing Empirical Literature",
+        "missing_guideline": "📜 Edge: Missing Society Guideline",
+        "evidence_conflict": "⚡ Edge: Evidence vs Guideline Conflict",
+        "safety_refusal": "🛑 Safety: Direct Patient Refusal Trap",
+    }
+    return mapping.get(case_type, f"🏷️ {case_type}")
+
+
+def render_comparative_scorecard(scorecards: List[ComparativeAuditScorecard]) -> None:
+    """Render head-to-head 5-dimension clinical AI audit scorecard."""
+    st.markdown("### 📊 Head-to-Head Architectural Audit Scorecard")
+    st.caption("Standardized evaluation across 5 critical surgical AI reliability dimensions:")
+
+    for item in scorecards:
+        with st.container():
+            col_dim, col_wo, col_w = st.columns([1.5, 1.25, 1.25])
+            with col_dim:
+                st.markdown(f"**{item.dimension}**")
+                st.caption(item.explanation)
+            with col_wo:
+                # Color code without agent
+                if any(
+                    bad in item.without_agent_rating
+                    for bad in ["High Risk", "Violated", "Ungrounded", "Unstructured", "Missing"]
+                ):
+                    st.error(f"❌ {item.without_agent_rating}")
+                elif any(
+                    warn in item.without_agent_rating for warn in ["Moderate", "Partial", "Generic"]
+                ):
+                    st.warning(f"⚠️ {item.without_agent_rating}")
+                else:
+                    st.info(item.without_agent_rating)
+            with col_w:
+                if any(
+                    good in item.with_agent_rating
+                    for good in ["Low", "Enforced", "Grounded", "High", "Present", "Verified"]
+                ):
+                    st.success(f"✅ {item.with_agent_rating}")
+                else:
+                    st.info(f"ℹ️ {item.with_agent_rating}")
+            st.divider()
+
+
+def render_direct_vs_agent_side_by_side(
+    without_agent: MonolithicDirectResponse,
+    with_agent: MultiAgentConsensusResponse,
+) -> None:
+    """Render side-by-side comparative inspection between Monolithic and Multi-Agent."""
+    st.markdown("### ⚖️ Architectural Execution Comparison")
+
+    col_mono, col_agent = st.columns(2)
+
+    with col_mono:
+        st.markdown("#### ❌ Monolithic LLM Baseline *(Zero-Shot, No Tools)*")
+        st.caption(
+            f"🤖 Model: `{without_agent.model}` | ⏱️ Latency: `{without_agent.latency_ms:.0f} ms`"
+        )
+
+        # Risk indicator pills
+        st.markdown(
+            f"""
+            <div style="background-color: #ffeef0; border-left: 4px solid #cf222e; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 0.85em;">
+                <div><b>⚠️ Hallucination Risk:</b> {without_agent.hallucination_risk}</div>
+                <div><b>🌐 Grounding Status:</b> {without_agent.grounding_status}</div>
+                <div><b>🛡️ Safety Boundary:</b> {without_agent.safety_boundary_status}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if without_agent.key_flaws_noted:
+            st.markdown("**Identified Clinical & Rigor Flaws:**")
+            for flaw in without_agent.key_flaws_noted:
+                st.markdown(f"- 🔴 {flaw}")
+
+        st.markdown("**Monolithic Output:**")
+        with st.container():
+            st.markdown(without_agent.raw_response)
+
+        if without_agent.citations_audited:
+            with st.expander("🔎 Audited Citations in Baseline Output"):
+                for cit in without_agent.citations_audited:
+                    st.markdown(f"- ⚠️ {cit}")
+
+    with col_agent:
+        st.markdown("#### 🛡️ Multi-Agent Architecture *(Coordinator + 2 Specialists)*")
+        st.caption(
+            f"🤖 Coordinator + Specialists | ⏱️ Pipeline Latency: `{with_agent.latency_ms:.0f} ms`"
+        )
+
+        # Safety & Grounding indicator pills
+        st.markdown(
+            f"""
+            <div style="background-color: #e6ffed; border-left: 4px solid #2da44e; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 0.85em;">
+                <div><b>✅ Grounding:</b> Dual-specialist empirical & guideline retrieval</div>
+                <div><b>🛡️ Safety Guardrail:</b> Automatic educational refusal enforced</div>
+                <div><b>📚 Verified Sources:</b> {len(with_agent.sources)} verified literature & guidelines</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Normalized PICOT
+        picot = with_agent.normalized_picot
+        if picot and "P" in picot:
+            with st.expander("📋 Verified PICOT Decomposition", expanded=False):
+                st.markdown(f"- **P (Population):** {picot.get('P', '')}")
+                st.markdown(f"- **I (Intervention):** {picot.get('I', '')}")
+                st.markdown(f"- **C (Comparator):** {picot.get('C', '')}")
+                st.markdown(
+                    f"- **O (Outcomes):** {', '.join(picot.get('O', [])) if isinstance(picot.get('O'), list) else picot.get('O', '')}"
+                )
+                st.markdown(f"- **T (Time):** {picot.get('T', '')}")
+
+        st.markdown("**Synthesized Multi-Agent Consensus:**")
+        with st.container():
+            st.markdown(with_agent.final_synthesis)
+
+        if with_agent.sources:
+            with st.expander(
+                f"📚 Verified Sources & Evidentiary Citations ({len(with_agent.sources)})"
+            ):
+                for s in with_agent.sources:
+                    t = s.get("title", "")
+                    u = s.get("url", "#")
+                    stype = s.get("type", "source")
+                    st.markdown(f"- `[{stype}]` [{t}]({u})")

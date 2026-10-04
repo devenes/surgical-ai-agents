@@ -7,7 +7,11 @@ from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.backend.schemas import (
+    ComparativeAnalysisRequest,
+    ComparativeAnalysisResponse,
     ModelInfo,
+    MonolithicDirectRequest,
+    MonolithicDirectResponse,
     MultiAgentConsensusRequest,
     MultiAgentConsensusResponse,
     MultimodalInquiryRequest,
@@ -55,14 +59,19 @@ def root() -> Dict[str, str]:
 def health_check() -> Dict[str, Any]:
     """Check backend operational health, configuration, and credential presence."""
     has_api_key = bool(os.environ.get("GOOGLE_API_KEY"))
-    has_project = bool(os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"))
+    has_project = bool(
+        os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    )
 
     return {
         "status": "healthy",
         "service": "surgical-ai-api",
         "credentials_configured": has_api_key or has_project,
-        "auth_mode": "api_key" if has_api_key else ("adc_vertex" if has_project else "offline_simulation_only"),
-        "default_region": os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get("GOOGLE_CLOUD_REGION", "us"),
+        "auth_mode": "api_key"
+        if has_api_key
+        else ("adc_vertex" if has_project else "offline_simulation_only"),
+        "default_region": os.environ.get("GOOGLE_CLOUD_LOCATION")
+        or os.environ.get("GOOGLE_CLOUD_REGION", "us"),
         "default_project": os.environ.get("GOOGLE_CLOUD_PROJECT", "auto-inferred"),
         "subagent_architecture": "Coordinator + Evidence Specialist (Sub-Agent 1) + Guideline Specialist (Sub-Agent 2)",
     }
@@ -134,4 +143,36 @@ def decompose_picot_inquiry(req: PICOTDecomposeRequest) -> PICOTDecomposeRespons
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Decomposition failed: {str(exc)}",
+        ) from exc
+
+
+@app.post(
+    "/api/agents/direct",
+    response_model=MonolithicDirectResponse,
+    tags=["Multi-Agent Orchestration"],
+)
+def execute_monolithic_direct(req: MonolithicDirectRequest) -> MonolithicDirectResponse:
+    """Run direct zero-shot query without agents or grounding tools (monolithic baseline)."""
+    try:
+        return service.execute_monolithic_direct(req)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Direct monolithic execution failed: {str(exc)}",
+        ) from exc
+
+
+@app.post(
+    "/api/agents/compare",
+    response_model=ComparativeAnalysisResponse,
+    tags=["Multi-Agent Orchestration"],
+)
+def execute_comparative_analysis(req: ComparativeAnalysisRequest) -> ComparativeAnalysisResponse:
+    """Run head-to-head comparison: Monolithic Baseline vs 2-SubAgent Architecture."""
+    try:
+        return service.execute_comparative_analysis(req)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Comparative analysis failed: {str(exc)}",
         ) from exc

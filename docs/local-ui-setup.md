@@ -90,13 +90,26 @@ To minimize API cost and token usage during local development, testing, and UI d
 
 ## 🎛️ Features & Tab Breakdown
 
-### 1. 👁️ Multimodal Vision Studio
-- **Image Input**: Upload custom images (`PNG`, `JPG`, `WEBP`) or select the bundled *Critical View of Safety (CVS)* schematic.
-- **Inquiry Prompts**: Choose from quick preset prompts (anatomical landmarks, CVS criteria, robotic computer vision research) or enter a custom prompt.
-- **Inspectable Results**:
-  - `Observation & Analysis`: Visual narrative and detected anatomical features.
-  - `Generation Parameters`: Active model, latency, temperature, top-p, and estimated tokens.
-  - `Raw JSON Payload`: Complete structured API response.
+### 1. ⚖️ Benchmark: With vs. Without Agents (Head-to-Head Analysis)
+- **Pedagogical Comparison**: Directly contrasts a ungrounded zero-shot monolithic model against our 2-subagent (Coordinator + Evidence & Guideline Specialists) architecture.
+- **8 Curated Clinical Cases** (from [`evaluations/test-cases.yaml`](../evaluations/test-cases.yaml)):
+  - `NORM-01`: Multimodal Prehabilitation in Colorectal Surgery *(Normal Evidence Synthesis)*
+  - `NORM-02`: Minimally Invasive vs Open Whipple *(Learning Curve & Quality Metrics)*
+  - `NORM-03`: ICG Fluorescence Angiography for Anastomotic Perfusion *(Technology Assessment)*
+  - `NORM-05`: Mild Biliary Pancreatitis Cholecystectomy Timing *(Same-Admission vs Delayed)*
+  - `EDGE-01`: HIFU for Early Esophageal Adenocarcinoma *(Missing Empirical Trials Trap)*
+  - `EDGE-02`: Topical Tranexamic Acid in Hernia Repair *(Missing Society Guideline Trap)*
+  - `EDGE-03`: Colorectal Mechanical vs Oral Antibiotic Bowel Prep *(International Guideline Conflict)*
+  - `EDGE-07`: 72-Year-Old Patient with Albumin 2.8 Delay Surgery *(Safety Refusal Trap)*
+- **Side-by-Side Architectural Audit**:
+  - Highlights baseline flaws (hallucinated PMIDs, made-up guidelines, and direct patient management violations).
+  - Demonstrates multi-agent grounding, explicit missing evidence admission, and automated safety refusal.
+- **5-Dimension Audit Scorecard**:
+  - Grounding & Web Traceability
+  - Citation Integrity & Hallucinations
+  - Structure & PICOT Decomposition
+  - Guideline & Society Attribution
+  - Safety & CDSS Boundaries
 
 ### 2. 🤖 Multi-Agent Consensus Studio
 - **Coordinator + 2 Sub-Agents Architecture**:
@@ -107,7 +120,15 @@ To minimize API cost and token usage during local development, testing, and UI d
 - **Timeline Stepper**: Visual execution progress showing latency per step.
 - **Side-by-Side Cards**: Direct visual comparison of empirical findings vs society guidelines.
 
-### 3. ⚡ PICOT Query Decomposer
+### 3. 👁️ Multimodal Vision Studio
+- **Image Input**: Upload custom images (`PNG`, `JPG`, `WEBP`) or select the bundled *Critical View of Safety (CVS)* schematic.
+- **Inquiry Prompts**: Choose from quick preset prompts (anatomical landmarks, CVS criteria, robotic computer vision research) or enter a custom prompt.
+- **Inspectable Results**:
+  - `Observation & Analysis`: Visual narrative and detected anatomical features.
+  - `Generation Parameters`: Active model, latency, temperature, top-p, and estimated tokens.
+  - `Raw JSON Payload`: Complete structured API response.
+
+### 4. ⚡ PICOT Query Decomposer
 - Fast conversion of surgeon clinical questions into formal:
   - **P**opulation
   - **I**ntervention
@@ -116,10 +137,10 @@ To minimize API cost and token usage during local development, testing, and UI d
   - **T**imeframe
   - Keyword search vectors
 
-### 4. 📚 Specialist Deep-Dive
+### 5. 📚 Specialist Deep-Dive
 - Query Sub-Agent 1 or Sub-Agent 2 independently for focused literature or guideline checks.
 
-### 5. ⚙️ API & Diagnostics
+### 6. ⚙️ API & Diagnostics
 - Ping FastAPI backend connection.
 - Verify credential configuration (`GOOGLE_API_KEY`, `GOOGLE_CLOUD_PROJECT`).
 - Review token saving recommendations.
@@ -131,11 +152,11 @@ To minimize API cost and token usage during local development, testing, and UI d
 Run the full offline test suite without consuming any tokens:
 
 ```bash
-# Run app-specific tests
+# Run app-specific tests (FastAPI + Streamlit helpers)
 uv run pytest tests/test_unit_app_*.py -v
 
-# Run entire repository test suite
+# Run entire repository test suite (36 offline unit tests)
 uv run pytest
 ```
 
-All 31 offline tests pass deterministically in under 2 seconds.
+All 36 offline tests pass deterministically in under 2 seconds with **zero API tokens consumed**.

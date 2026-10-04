@@ -20,7 +20,6 @@ def create_evidence_agent(
     model_name: Optional[str] = None,
     use_url_context: bool = False,
 ) -> Agent:
-
     """Create a fully grounded Evidence Agent instance."""
     tools = [google_search]
     if use_url_context:
@@ -43,5 +42,3 @@ def create_evidence_agent(
         mode="single_turn",
         input_schema=EvidenceQueryInput,
     )
-
-

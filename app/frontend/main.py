@@ -13,6 +13,10 @@ from PIL import Image
 import streamlit as st
 
 from app.backend.schemas import (
+    ComparativeAnalysisRequest,
+    ComparativeAnalysisResponse,
+    MonolithicDirectRequest,
+    MonolithicDirectResponse,
     MultiAgentConsensusRequest,
     MultiAgentConsensusResponse,
     MultimodalInquiryRequest,
@@ -21,7 +25,10 @@ from app.backend.schemas import (
 )
 from app.backend.service import AppService
 from app.frontend.components import (
+    get_case_type_badge,
+    render_comparative_scorecard,
     render_consensus_matrix,
+    render_direct_vs_agent_side_by_side,
     render_evidence_vs_guidelines,
     render_execution_timeline,
     render_sidebar_controls,
@@ -34,6 +41,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
 
 # Local service instance for direct in-process execution
 @st.cache_resource
@@ -81,6 +89,38 @@ def run_multiagent(req: MultiAgentConsensusRequest) -> MultiAgentConsensusRespon
     return local_service.execute_multiagent_consensus(req)
 
 
+# Helper: Execute head-to-head comparative analysis
+def run_comparative_analysis(req: ComparativeAnalysisRequest) -> ComparativeAnalysisResponse:
+    if params["connection_mode"] == "FastAPI Backend (REST)":
+        try:
+            with httpx.Client(timeout=60.0) as client:
+                resp = client.post(
+                    f"{params['fastapi_url']}/api/agents/compare",
+                    json=req.model_dump(),
+                )
+                resp.raise_for_status()
+                return ComparativeAnalysisResponse.model_validate(resp.json())
+        except Exception as e:
+            st.warning(f"⚠️ FastAPI REST request failed ({e}). Falling back to in-process service.")
+    return local_service.execute_comparative_analysis(req)
+
+
+# Helper: Execute monolithic direct query
+def run_monolithic_direct(req: MonolithicDirectRequest) -> MonolithicDirectResponse:
+    if params["connection_mode"] == "FastAPI Backend (REST)":
+        try:
+            with httpx.Client(timeout=30.0) as client:
+                resp = client.post(
+                    f"{params['fastapi_url']}/api/agents/direct",
+                    json=req.model_dump(),
+                )
+                resp.raise_for_status()
+                return MonolithicDirectResponse.model_validate(resp.json())
+        except Exception as e:
+            st.warning(f"⚠️ FastAPI REST request failed ({e}). Falling back to in-process service.")
+    return local_service.execute_monolithic_direct(req)
+
+
 # =============================================================================
 # Main Header
 # =============================================================================
@@ -108,10 +148,11 @@ with badge_col4:
 # =============================================================================
 # Application Tabs
 # =============================================================================
-tab_vision, tab_multiagent, tab_picot, tab_specialist, tab_diagnostics = st.tabs(
+tab_compare, tab_multiagent, tab_vision, tab_picot, tab_specialist, tab_diagnostics = st.tabs(
     [
-        "👁️ Multimodal Vision Studio",
+        "⚖️ Benchmark: With vs. Without Agents",
         "🤖 Multi-Agent Consensus Studio",
+        "👁️ Multimodal Vision Studio",
         "⚡ PICOT Query Decomposer",
         "📚 Specialist Deep-Dive",
         "⚙️ API & Diagnostics",
@@ -120,7 +161,111 @@ tab_vision, tab_multiagent, tab_picot, tab_specialist, tab_diagnostics = st.tabs
 
 
 # -----------------------------------------------------------------------------
-# TAB 1: Multimodal Vision Studio
+# TAB 1: Benchmark: With vs. Without Agents
+# -----------------------------------------------------------------------------
+with tab_compare:
+    st.subheader("⚖️ Empirical Benchmark: Monolithic Baseline vs. 2-Subagent Architecture")
+    st.markdown(
+        "Demonstrates why multi-agent specialization is essential for high-stakes surgical inquiries. "
+        "Direct zero-shot monolithic models frequently **hallucinate citations**, **conflate trials with guidelines**, "
+        "and **fail safety boundaries** by dispensing direct, unverified patient advice. "
+        "The **2-Subagent Architecture** (Coordinator + Evidence Specialist + Guideline Specialist) grounds inquiries "
+        "in verifiable PubMed RCTs and surgical society guidelines while enforcing an automatic educational refusal gate."
+    )
+
+    preset_map = {p.id: p for p in preset_questions}
+    case_choices = list(preset_map.keys())
+
+    def format_case_choice(cid: str) -> str:
+        case = preset_map.get(cid)
+        if not case:
+            return cid
+        return f"[{case.id}] {case.title} ({case.category})"
+
+    c_sel1, c_sel2 = st.columns([2, 1])
+    with c_sel1:
+        selected_case_id = st.selectbox(
+            "Select Clinical Benchmark Case:",
+            options=case_choices,
+            format_func=format_case_choice,
+            key="bench_case_select",
+        )
+    with c_sel2:
+        st.caption("Benchmark Category:")
+        active_bench_case = preset_map[selected_case_id]
+        st.markdown(f"**{get_case_type_badge(active_bench_case.case_type)}**")
+
+    # Display pedagogical context cards
+    with st.container():
+        p_c1, p_c2, p_c3 = st.columns(3)
+        with p_c1:
+            st.info(f"💡 **Pedagogical Lesson**\n\n{active_bench_case.pedagogical_lesson}")
+        with p_c2:
+            st.error(
+                f"❌ **Expected Monolithic Flaw**\n\n{active_bench_case.expected_without_agent_flaw}"
+            )
+        with p_c3:
+            st.success(
+                f"🛡️ **Multi-Agent Benefit**\n\n{active_bench_case.expected_with_agent_benefit}"
+            )
+
+    bench_question = st.text_area(
+        "Clinical Research / Scenario Prompt:",
+        value=active_bench_case.question,
+        height=90,
+        key="bench_question_input",
+    )
+
+    col_bench_btn, col_bench_meta = st.columns([1, 2])
+    with col_bench_btn:
+        run_compare_btn = st.button(
+            "🚀 Run Head-to-Head Comparison",
+            type="primary",
+            use_container_width=True,
+            key="btn_run_compare",
+        )
+    with col_bench_meta:
+        st.caption(
+            f"Comparing: **Monolithic Baseline ({params['model_info'].display_name})** vs. "
+            f"**Coordinator + Evidence & Guideline Specialists**"
+        )
+
+    if run_compare_btn:
+        with st.spinner(f"Running head-to-head evaluation on '{active_bench_case.title}'..."):
+            comp_req = ComparativeAnalysisRequest(
+                question=bench_question,
+                case_id=selected_case_id,
+                model=params["model_id"],
+                mock_mode=params["mock_mode"],
+            )
+            comp_res = run_comparative_analysis(comp_req)
+
+        st.divider()
+
+        # Pedagogical takeaway alert banner
+        st.info(f"🎯 **Audit Conclusion:** {comp_res.pedagogical_takeaway}")
+
+        # Side-by-side view
+        render_direct_vs_agent_side_by_side(comp_res.without_agent, comp_res.with_agent)
+
+        st.divider()
+
+        # 5-Dimension Audit Scorecard
+        render_comparative_scorecard(comp_res.scorecard)
+
+        # Expandable step timeline and matrix
+        with st.expander("⏱️ Multi-Agent Execution Pipeline Breakdown", expanded=False):
+            render_execution_timeline(comp_res.with_agent.execution_steps)
+
+        with st.expander("⚖️ Reconciled Consensus Matrix", expanded=False):
+            render_consensus_matrix(comp_res.with_agent.consensus_matrix)
+
+        with st.expander("📦 Full Raw Benchmark JSON Payloads", expanded=False):
+            st.json(comp_res.model_dump())
+
+
+# -----------------------------------------------------------------------------
+# TAB 3: Multimodal Vision Studio
 # -----------------------------------------------------------------------------
 with tab_vision:
     st.subheader("🖼️ Surgical & Anatomical Vision Inspection")
@@ -169,7 +314,7 @@ with tab_vision:
             pil_img = Image.open(io.BytesIO(image_bytes))
             st.image(
                 pil_img,
-                caption=f"Visual Input: {image_filename} ({pil_img.width}x{pil_img.height} px, {len(image_bytes)/1024:.1f} KB)",
+                caption=f"Visual Input: {image_filename} ({pil_img.width}x{pil_img.height} px, {len(image_bytes) / 1024:.1f} KB)",
                 use_container_width=True,
             )
 
@@ -205,13 +350,17 @@ with tab_vision:
 
         st.caption("🔒 Safety: Responses are strictly educational and non-diagnostic.")
 
-        run_multimodal_btn = st.button("🚀 Run Vision Analysis", type="primary", use_container_width=True)
+        run_multimodal_btn = st.button(
+            "🚀 Run Vision Analysis", type="primary", use_container_width=True
+        )
 
     if run_multimodal_btn:
         if not image_bytes:
             st.error("Please provide or select an image asset first.")
         else:
-            with st.spinner(f"Analyzing visual features using {params['model_info'].display_name}..."):
+            with st.spinner(
+                f"Analyzing visual features using {params['model_info'].display_name}..."
+            ):
                 req = MultimodalInquiryRequest(
                     prompt=user_prompt,
                     image_base64=base64.b64encode(image_bytes).decode("utf-8"),
@@ -235,7 +384,9 @@ with tab_vision:
                 if vis_resp.visual_elements_detected:
                     st.markdown("**Detected Anatomical Features:**")
                     st.write(", ".join([f"`{el}`" for el in vis_resp.visual_elements_detected]))
-                st.caption(f"⏱️ Latency: **{vis_resp.latency_ms:.1f} ms** | Model: **{vis_resp.model}**")
+                st.caption(
+                    f"⏱️ Latency: **{vis_resp.latency_ms:.1f} ms** | Model: **{vis_resp.model}**"
+                )
 
             with resp_tab2:
                 st.markdown(
@@ -243,10 +394,10 @@ with tab_vision:
                     - **Model ID:** `{vis_resp.model}`
                     - **Latency:** `{vis_resp.latency_ms} ms`
                     - **Estimated Tokens:** `{vis_resp.token_estimate}`
-                    - **Temperature:** `{params['temperature']}`
-                    - **Top-P:** `{params['top_p']}`
-                    - **Max Tokens:** `{params['max_output_tokens']}`
-                    - **Thinking Budget:** `{params['thinking_budget']}`
+                    - **Temperature:** `{params["temperature"]}`
+                    - **Top-P:** `{params["top_p"]}`
+                    - **Max Tokens:** `{params["max_output_tokens"]}`
+                    - **Thinking Budget:** `{params["thinking_budget"]}`
                     """
                 )
                 st.code(user_prompt, language="markdown")
@@ -276,6 +427,9 @@ with tab_multiagent:
     )
 
     active_preset = next(p for p in preset_questions if p.id == selected_preset_qid)
+    st.caption(
+        f"{get_case_type_badge(active_preset.case_type)} — *{active_preset.pedagogical_lesson}*"
+    )
 
     research_question = st.text_area(
         "Clinical Research Question:",
@@ -286,7 +440,9 @@ with tab_multiagent:
 
     col_btn, col_info = st.columns([1, 2])
     with col_btn:
-        run_consensus_btn = st.button("🚀 Execute Multi-Agent Consensus", type="primary", use_container_width=True)
+        run_consensus_btn = st.button(
+            "🚀 Execute Multi-Agent Consensus", type="primary", use_container_width=True
+        )
     with col_info:
         active_subagents = []
         if params["enable_evidence"]:
@@ -315,13 +471,21 @@ with tab_multiagent:
         with st.expander("📌 View Normalized PICOT Scope", expanded=True):
             p_cols = st.columns(4)
             with p_cols[0]:
-                st.markdown(f"**Population:**\n\n{agent_resp.normalized_picot.get('population', '')}")
+                st.markdown(
+                    f"**Population:**\n\n{agent_resp.normalized_picot.get('population', '')}"
+                )
             with p_cols[1]:
-                st.markdown(f"**Intervention:**\n\n{agent_resp.normalized_picot.get('intervention', '')}")
+                st.markdown(
+                    f"**Intervention:**\n\n{agent_resp.normalized_picot.get('intervention', '')}"
+                )
             with p_cols[2]:
-                st.markdown(f"**Comparator:**\n\n{agent_resp.normalized_picot.get('comparator', '')}")
+                st.markdown(
+                    f"**Comparator:**\n\n{agent_resp.normalized_picot.get('comparator', '')}"
+                )
             with p_cols[3]:
-                st.markdown(f"**Outcomes:**\n\n{', '.join(agent_resp.normalized_picot.get('outcomes', []))}")
+                st.markdown(
+                    f"**Outcomes:**\n\n{', '.join(agent_resp.normalized_picot.get('outcomes', []))}"
+                )
 
         # Side-by-Side Specialist Findings
         render_evidence_vs_guidelines(
@@ -368,7 +532,9 @@ with tab_picot:
     if st.button("🧩 Decompose Inquiry", type="primary"):
         with st.spinner("Extracting PICOT parameters..."):
             decomp_res = local_service.decompose_picot(
-                PICOTDecomposeRequest(question=decom_input, model=params["model_id"], mock_mode=True)
+                PICOTDecomposeRequest(
+                    question=decom_input, model=params["model_id"], mock_mode=True
+                )
             )
 
         c1, c2 = st.columns(2)
@@ -380,7 +546,8 @@ with tab_picot:
             st.info("**🎯 Outcomes:**\n" + "\n".join([f"- {o}" for o in decomp_res.outcomes]))
             st.caption(f"**⏱️ Time Range:** {decomp_res.time_range}")
             st.markdown(
-                "**🔍 Keyword Vectors:** " + " ".join([f"`{k}`" for k in decomp_res.search_keywords])
+                "**🔍 Keyword Vectors:** "
+                + " ".join([f"`{k}`" for k in decomp_res.search_keywords])
             )
 
 
@@ -389,11 +556,16 @@ with tab_picot:
 # -----------------------------------------------------------------------------
 with tab_specialist:
     st.subheader("📚 Specialist Deep-Dive (Direct Sub-Agent Query)")
-    st.markdown("Query Sub-Agent 1 (Literature Evidence) or Sub-Agent 2 (Society Guidelines) in isolation.")
+    st.markdown(
+        "Query Sub-Agent 1 (Literature Evidence) or Sub-Agent 2 (Society Guidelines) in isolation."
+    )
 
     spec_mode = st.radio(
         "Select Target Specialist Sub-Agent:",
-        ["Sub-Agent 1: Evidence Specialist (PubMed/RCTs)", "Sub-Agent 2: Guideline Specialist (Societies)"],
+        [
+            "Sub-Agent 1: Evidence Specialist (PubMed/RCTs)",
+            "Sub-Agent 2: Guideline Specialist (Societies)",
+        ],
         horizontal=True,
     )
 
@@ -419,11 +591,15 @@ with tab_specialist:
         if is_evid:
             st.markdown(spec_resp.evidence_findings.get("summary", "No findings."))
             for s in spec_resp.evidence_findings.get("key_study_findings", []):
-                st.markdown(f"- **[{s.get('study_title')}]({s.get('url')})** — *{s.get('evidence_type')}* ({s.get('year')})")
+                st.markdown(
+                    f"- **[{s.get('study_title')}]({s.get('url')})** — *{s.get('evidence_type')}* ({s.get('year')})"
+                )
         else:
             st.markdown(spec_resp.guideline_findings.get("summary", "No findings."))
             for g in spec_resp.guideline_findings.get("guideline_statements", []):
-                st.markdown(f"- **[{g.get('organization')} — {g.get('guideline_title')}]({g.get('url')})** ({g.get('year')})")
+                st.markdown(
+                    f"- **[{g.get('organization')} — {g.get('guideline_title')}]({g.get('url')})** ({g.get('year')})"
+                )
 
 
 # -----------------------------------------------------------------------------
@@ -445,8 +621,12 @@ with tab_diagnostics:
                 else:
                     st.warning(f"FastAPI responded with HTTP {res.status_code}")
         except Exception as ex:
-            st.error(f"❌ FastAPI Backend is currently unreachable at `{params['fastapi_url']}` ({ex}).")
-            st.caption("You can run the backend using: `uv run uvicorn app.backend.api:app --reload --port 8000`")
+            st.error(
+                f"❌ FastAPI Backend is currently unreachable at `{params['fastapi_url']}` ({ex})."
+            )
+            st.caption(
+                "You can run the backend using: `uv run uvicorn app.backend.api:app --reload --port 8000`"
+            )
 
     with d_col2:
         st.markdown("#### Token Optimization & Best Practices")

@@ -160,12 +160,16 @@ class PICOTDecomposeResponse(BaseModel):
 
 
 class PresetInquiry(BaseModel):
-    """Pre-configured clinical question for quick demo."""
+    """Pre-configured clinical question for educational benchmarks and demo."""
 
     id: str
     title: str
     question: str
     category: str
+    case_type: str = "normal_synthesis"  # normal_synthesis, missing_evidence, missing_guideline, evidence_conflict, safety_refusal
+    pedagogical_lesson: str = ""
+    expected_without_agent_flaw: str = ""
+    expected_with_agent_benefit: str = ""
     recommended_model: str = "gemini-2.5-flash"
 
 
@@ -177,3 +181,55 @@ class PresetImage(BaseModel):
     filename: str
     description: str
     suggested_prompts: List[str]
+
+
+class MonolithicDirectRequest(BaseModel):
+    """Request for direct zero-shot query without agents or tools."""
+
+    question: str = Field(..., min_length=5)
+    model: str = Field("gemini-2.5-flash")
+    mock_mode: bool = Field(False)
+
+
+class MonolithicDirectResponse(BaseModel):
+    """Result of a direct monolithic model call without multi-agent decomposition."""
+
+    raw_response: str
+    model: str
+    latency_ms: float
+    hallucination_risk: str  # "High", "Moderate", "Low"
+    grounding_status: str  # "Unverified / Static Training Weights"
+    safety_boundary_status: str  # "Violated (Direct Patient Advice)", "Speculative", "Compliant"
+    citations_audited: List[str] = Field(default_factory=list)
+    key_flaws_noted: List[str] = Field(default_factory=list)
+
+
+class ComparativeAuditScorecard(BaseModel):
+    """Side-by-side evaluation dimension in comparative analysis."""
+
+    dimension: str
+    without_agent_rating: str
+    with_agent_rating: str
+    explanation: str
+
+
+class ComparativeAnalysisRequest(BaseModel):
+    """Request to execute a head-to-head comparison: Without Agents vs With Agents."""
+
+    question: str = Field(..., min_length=5)
+    case_id: Optional[str] = None
+    model: str = Field("gemini-2.5-flash")
+    mock_mode: bool = Field(False)
+
+
+class ComparativeAnalysisResponse(BaseModel):
+    """Complete comparative result comparing monolithic vs multi-agent execution."""
+
+    case_id: Optional[str] = None
+    case_title: str
+    case_type: str
+    question: str
+    without_agent: MonolithicDirectResponse
+    with_agent: MultiAgentConsensusResponse
+    scorecard: List[ComparativeAuditScorecard]
+    pedagogical_takeaway: str

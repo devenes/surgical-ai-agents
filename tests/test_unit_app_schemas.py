@@ -125,4 +125,3 @@ def test_multiagent_response_schema():
     )
     assert resp.final_synthesis == "Master brief"
     assert resp.latency_ms == 85.0
-

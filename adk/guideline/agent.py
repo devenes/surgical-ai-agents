@@ -20,7 +20,6 @@ def create_guideline_agent(
     model_name: Optional[str] = None,
     use_url_context: bool = False,
 ) -> Agent:
-
     """Create a fully grounded Guideline Agent instance."""
     tools = [google_search]
     if use_url_context:
@@ -44,5 +43,3 @@ def create_guideline_agent(
         mode="single_turn",
         input_schema=GuidelineQueryInput,
     )
-
-

@@ -58,5 +58,3 @@ def create_coordinator_agent(
 
 # Expose root_agent instance for native ADK AgentEvaluator discovery
 root_agent = create_coordinator_agent()
-
-

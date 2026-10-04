@@ -37,7 +37,6 @@ def test_guideline_agent_construction():
     assert agent.input_schema is not None
 
 
-
 def test_coordinator_agent_construction():
     agent = create_coordinator_agent()
     assert agent.name == "coordinator"
@@ -52,4 +51,3 @@ def test_coordinator_agent_construction():
     # Subagents are automatically exposed as SingleTurnAgentTool in tools
     assert any(isinstance(t, AgentTool) for t in agent.tools)
     assert agent.output_schema is not None
-

@@ -12,7 +12,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 def run_backend(port: int = 8000, host: str = "127.0.0.1", reload: bool = True) -> None:
     """Launch the FastAPI backend server using uvicorn."""
     import uvicorn
-    print(f"🚀 Starting FastAPI backend at http://{host}:{port} (docs at http://{host}:{port}/docs)...")
+
+    print(
+        f"🚀 Starting FastAPI backend at http://{host}:{port} (docs at http://{host}:{port}/docs)..."
+    )
     uvicorn.run("app.backend.api:app", host=host, port=port, reload=reload)
 
 
@@ -112,8 +115,12 @@ def main() -> None:
         nargs="?",
         help="Service to launch: 'backend' (FastAPI), 'frontend' (Streamlit), or 'all' (both).",
     )
-    parser.add_argument("--backend-port", type=int, default=8000, help="FastAPI port (default: 8000)")
-    parser.add_argument("--frontend-port", type=int, default=8501, help="Streamlit port (default: 8501)")
+    parser.add_argument(
+        "--backend-port", type=int, default=8000, help="FastAPI port (default: 8000)"
+    )
+    parser.add_argument(
+        "--frontend-port", type=int, default=8501, help="Streamlit port (default: 8501)"
+    )
     args = parser.parse_args()
 
     if args.service == "backend":

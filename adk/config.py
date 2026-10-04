@@ -8,7 +8,9 @@ from google.adk.models.google_llm import Gemini
 
 # Defaults configurable via environment variables
 DEFAULT_PROJECT: Optional[str] = os.environ.get("GOOGLE_CLOUD_PROJECT")
-DEFAULT_LOCATION: str = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get("GOOGLE_CLOUD_REGION", "us")
+DEFAULT_LOCATION: str = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get(
+    "GOOGLE_CLOUD_REGION", "us"
+)
 DEFAULT_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
 
