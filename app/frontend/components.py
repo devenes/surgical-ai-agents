@@ -15,14 +15,14 @@ def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
         "Execution Mode:",
         ["Direct In-Process", "FastAPI Backend (REST)"],
         index=0,
-        help="Direct runs in-process with local AppService. REST queries FastAPI at http://localhost:8000.",
+        help="Direct runs in-process with local AppService. REST queries FastAPI at http://127.0.0.1:8000.",
     )
 
-    fastapi_url = "http://localhost:8000"
+    fastapi_url = "http://127.0.0.1:8000"
     if connection_mode == "FastAPI Backend (REST)":
         fastapi_url = st.sidebar.text_input(
             "FastAPI URL:",
-            value="http://localhost:8000",
+            value="http://127.0.0.1:8000",
             help="Base URL of the running FastAPI server.",
         )
 

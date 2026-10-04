@@ -16,7 +16,21 @@ def run_backend(port: int = 8000, host: str = "127.0.0.1", reload: bool = True) 
     uvicorn.run("app.backend.api:app", host=host, port=port, reload=reload)
 
 
-def run_frontend(port: int = 8501, host: str = "localhost") -> None:
+def _stop_process(proc: subprocess.Popen) -> None:
+    """Safely terminate a child process across Windows, macOS, and Linux."""
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=2.0)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+
+
+def run_frontend(port: int = 8501, host: str = "127.0.0.1") -> None:
     """Launch the Streamlit frontend application."""
     frontend_path = REPO_ROOT / "app" / "frontend" / "main.py"
     print(f"🩺 Starting Streamlit UI at http://{host}:{port}...")
@@ -30,6 +44,8 @@ def run_frontend(port: int = 8501, host: str = "localhost") -> None:
         str(port),
         "--server.address",
         host,
+        "--server.headless",
+        "true",
     ]
     subprocess.run(cmd, check=True)
 
@@ -41,7 +57,8 @@ def run_all(backend_port: int = 8000, frontend_port: int = 8501) -> None:
     print("SURGICAL AI MULTIMODAL & MULTI-AGENT WORKSPACE")
     print("=" * 60)
     print(f"Backend API:  http://127.0.0.1:{backend_port} (/docs for Swagger)")
-    print(f"Streamlit UI: http://localhost:{frontend_port}")
+    print(f"Streamlit UI: http://127.0.0.1:{frontend_port}")
+    print("Press Ctrl+C to stop both services gracefully.")
     print("-" * 60)
 
     # Spawn backend as subprocess
@@ -58,7 +75,8 @@ def run_all(backend_port: int = 8000, frontend_port: int = 8501) -> None:
         ]
     )
 
-    time.sleep(1.0)
+    time.sleep(1.2)
+    frontend_proc = None
 
     try:
         frontend_proc = subprocess.Popen(
@@ -70,18 +88,19 @@ def run_all(backend_port: int = 8000, frontend_port: int = 8501) -> None:
                 str(frontend_path),
                 "--server.port",
                 str(frontend_port),
+                "--server.address",
+                "127.0.0.1",
+                "--server.headless",
+                "true",
             ]
         )
         frontend_proc.wait()
     except KeyboardInterrupt:
         print("\nStopping services...")
     finally:
-        backend_proc.terminate()
-        try:
-            frontend_proc.terminate()
-        except Exception:
-            pass
-        print("Services stopped.")
+        _stop_process(backend_proc)
+        _stop_process(frontend_proc)
+        print("Services stopped successfully.")
 
 
 def main() -> None:

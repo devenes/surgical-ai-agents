@@ -136,16 +136,16 @@ class AppService:
         """Return preset questions and sample images."""
         return PRESET_INQUIRIES, PRESET_IMAGES
 
-    def get_preset_image_bytes(self, preset_id: str) -> Optional[bytes]:
+    def get_preset_image_bytes(self, preset_id: Optional[str] = None) -> Optional[bytes]:
         """Load bundled preset image by identifier."""
+        if not preset_id:
+            return DEFAULT_IMAGE_PATH.read_bytes() if DEFAULT_IMAGE_PATH.exists() else None
+
         for p in PRESET_IMAGES:
             if p.id == preset_id:
                 path = DEMO_ASSET_DIR / p.filename
                 if path.exists():
                     return path.read_bytes()
-        # Fallback to default if matching
-        if DEFAULT_IMAGE_PATH.exists():
-            return DEFAULT_IMAGE_PATH.read_bytes()
         return None
 
     def execute_multimodal(self, req: MultimodalInquiryRequest) -> MultimodalInquiryResponse:
@@ -301,7 +301,10 @@ class AppService:
         mime_type = req.image_mime_type or "image/png"
 
         if req.image_base64:
-            image_bytes = base64.b64decode(req.image_base64)
+            b64_str = req.image_base64
+            if "," in b64_str:
+                b64_str = b64_str.split(",", 1)[1]
+            image_bytes = base64.b64decode(b64_str)
         elif req.preset_image_id:
             image_bytes = self.get_preset_image_bytes(req.preset_image_id)
         elif DEFAULT_IMAGE_PATH.exists():

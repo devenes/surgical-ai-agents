@@ -262,15 +262,17 @@ uv run python -m app.cli all
 # Option 2: Launch FastAPI backend only (http://127.0.0.1:8000/docs)
 uv run python -m app.cli backend --backend-port 8000
 
-# Option 3: Launch Streamlit frontend only (http://localhost:8501)
+# Option 3: Launch Streamlit frontend only (http://127.0.0.1:8501)
 uv run python -m app.cli frontend --frontend-port 8501
 ```
 
-*For comprehensive setup details and troubleshooting, see the [Local UI Setup Guide](docs/local-ui-setup.md).*
+*For comprehensive setup details and troubleshooting, see the [Local UI Setup Guide](docs/local-ui-setup.md) and [Windows Setup Guide](docs/windows-setup-guide.md).*
 
 ---
 
 ## 🚀 Quick Start
+
+> 🪟 **Windows Users**: Check the dedicated [Windows Setup & Execution Guide](docs/windows-setup-guide.md) for step-by-step PowerShell/CMD setup, activation scripts, and troubleshooting.
 
 ### Prerequisites
 - Python 3.10+ (tested on Python 3.12)
@@ -286,9 +288,14 @@ cd surgical-ai-agents
 
 # 2. Create virtual environment using uv or venv
 uv venv --python 3.12
-source .venv/bin/activate
 
-# 3. Install dependencies
+# 3. Activate virtual environment
+# On macOS / Linux:
+source .venv/bin/activate
+# On Windows (PowerShell):
+# .venv\Scripts\Activate.ps1
+
+# 4. Install dependencies
 uv pip install -e ".[dev]"
 ```
 

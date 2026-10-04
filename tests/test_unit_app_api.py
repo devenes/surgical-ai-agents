@@ -53,10 +53,8 @@ def test_api_preset_image(client):
 
 
 def test_api_preset_image_not_found(client):
-    # Temporarily rename/ensure nonexistent id
     response = client.get("/api/presets/image/nonexistent_image_id_xyz")
-    # Should either 404 or return fallback if fallback is configured
-    assert response.status_code in (200, 404)
+    assert response.status_code == 404
 
 
 def test_api_multimodal_endpoint(client):

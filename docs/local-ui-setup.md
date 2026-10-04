@@ -19,14 +19,21 @@ The Web UI is structured into two lightweight layers located in [`app/`](../app/
 ### 1. Python Environment
 Make sure you have Python 3.10+ installed (Python 3.12 recommended) and `uv` package manager:
 
+> 🪟 **Windows Users**: For detailed Windows PowerShell/CMD instructions, virtualenv scripts (`.venv\Scripts\Activate.ps1`), and troubleshooting, see the dedicated [Windows Setup Guide](windows-setup-guide.md).
+
 ```bash
 # Clone the repository (if not already done)
 git clone https://github.com/devenes/surgical-ai-agents.git
 cd surgical-ai-agents
 
 # Create and activate virtual environment
+# On macOS/Linux:
 uv venv --python 3.12
 source .venv/bin/activate
+
+# On Windows (PowerShell):
+# uv venv --python 3.12
+# .venv\Scripts\Activate.ps1
 
 # Install all project dependencies (including FastAPI, Streamlit, and dev tools)
 uv pip install -e ".[dev]"
@@ -43,7 +50,7 @@ You can launch the application in three ways using the unified launcher:
 uv run python -m app.cli all
 ```
 This spawns:
-- **Streamlit Web UI**: [`http://localhost:8501`](http://localhost:8501)
+- **Streamlit Web UI**: [`http://127.0.0.1:8501`](http://127.0.0.1:8501)
 - **FastAPI Backend**: [`http://127.0.0.1:8000`](http://127.0.0.1:8000) (Swagger Docs: [`/docs`](http://127.0.0.1:8000/docs))
 
 Press `Ctrl+C` in the terminal to stop both services gracefully.

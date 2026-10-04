@@ -55,11 +55,13 @@ app/
 
 ## 🚀 Quickstart
 
+> 🪟 **Windows Users**: For dedicated PowerShell/CMD setup instructions, see the [Windows Setup Guide](../docs/windows-setup-guide.md).
+
 ### 1. Launch Both Backend & Frontend
 ```bash
 uv run python -m app.cli all
 ```
-- **Streamlit Web UI**: http://localhost:8501
+- **Streamlit Web UI**: http://127.0.0.1:8501
 - **FastAPI OpenAPI Swagger**: http://127.0.0.1:8000/docs
 
 ### 2. Launch FastAPI Backend Only

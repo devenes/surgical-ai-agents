@@ -36,6 +36,8 @@ def test_service_preset_image_bytes(service):
     assert img_bytes is not None
     assert len(img_bytes) > 0
 
+    assert service.get_preset_image_bytes("nonexistent_unknown_id") is None
+
 
 def test_service_multimodal_mock(service):
     req = MultimodalInquiryRequest(
