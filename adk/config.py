@@ -11,7 +11,7 @@ DEFAULT_PROJECT: Optional[str] = os.environ.get("GOOGLE_CLOUD_PROJECT")
 DEFAULT_LOCATION: str = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get(
     "GOOGLE_CLOUD_REGION", "us"
 )
-DEFAULT_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+DEFAULT_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

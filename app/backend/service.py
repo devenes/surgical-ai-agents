@@ -404,7 +404,7 @@ class AppService:
         # Rule-based or mock extractor for instant offline token-free responses
         q = req.question.lower()
 
-        if "72-year-old" in q or "albumin" in q or "patient" in q and "delay" in q:
+        if "72-year-old" in q or "albumin" in q or ("patient" in q and "delay" in q):
             pop = "Adults with severe preoperative hypoalbuminemia (<3.0 g/dL) scheduled for elective colorectal cancer resection"
             interv = "Preoperative nutritional prehabilitation delay (2-4 weeks high-protein optimization)"
             comp = "Immediate surgical resection without nutritional prehabilitation delay"
@@ -588,7 +588,7 @@ class AppService:
                 "future completion date",
                 "5-year survival",
             ]
-        elif "bowel preparation" in q or "oral antibiotics" in q and "colorectal" in q:
+        elif "bowel preparation" in q or ("oral antibiotics" in q and "colorectal" in q):
             pop = "Adults undergoing elective colorectal surgical resection"
             interv = "Combined mechanical bowel preparation with oral nonabsorbable antibiotics (MBP + OAB)"
             comp = "Oral antibiotics alone (OAB) or no bowel preparation"
