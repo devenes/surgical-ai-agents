@@ -1,0 +1,96 @@
+# ==============================================================================
+# Git Ignore Rules for Surgical AI Agents POC
+# ==============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables & secrets (CRITICAL: Do not commit credentials)
+*.env
+*.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*credentials*.json
+*service_account*.json
+*service-account*.json
+client_secret*.json
+
+# Unit test, coverage & linting caches
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Logs & temporary files
+*.log
+logs/
+*.bak
+*.tmp
+*.orig
+scratch/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Agent runtime artifacts
+.gemini/
