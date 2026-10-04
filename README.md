@@ -2,6 +2,7 @@
 
 > **An Educational Multi-Agent Architecture for Evidence-Based Surgical Research**
 
+[![CI](https://github.com/devenes/surgical-ai-agents/actions/workflows/ci.yml/badge.svg)](https://github.com/devenes/surgical-ai-agents/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 [![Status: Workshop Prototype](https://img.shields.io/badge/Status-Workshop_Prototype-orange.svg)](#current-status)

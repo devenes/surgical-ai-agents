@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "surgical-ai-agents"
+version = "0.2.0"
+description = "Educational multi-agent research POC for surgeons using Google Agent Development Kit (ADK)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Surgical AI Workshop Team" }
+]
+keywords = [
+    "surgery",
+    "ai-agents",
+    "medical-education",
+    "evidence-synthesis",
+    "gemini",
+    "adk"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "google-adk>=2.11.0",
+    "google-genai>=2.28.0",
+    "google-auth>=2.38.0",
+    "pydantic>=2.10.0",
+    "jsonschema>=4.20.0",
+    "pyyaml>=6.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/devenes/surgical-ai-agents"
+Repository = "https://github.com/devenes/surgical-ai-agents.git"
+Documentation = "https://github.com/devenes/surgical-ai-agents/tree/main/docs"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["adk", "app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+    "backup",
+    ".venv",
+    ".git",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: live tests requiring Vertex AI credentials and internet access",
+]
+addopts = "-m not(integration)"
