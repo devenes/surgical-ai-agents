@@ -56,18 +56,9 @@ def create_coordinator_agent(
     )
 
 def get_root_agent() -> Agent:
-    """Return a lazily-instantiated root Coordinator Agent.
-
-    Defers file I/O and model construction until first call, avoiding
-    side-effects at import time and preventing FileNotFoundError in
-    environments where instruction files or credentials are absent.
-    """
+    """Return a Coordinator Agent instance."""
     return create_coordinator_agent()
 
 
-# ADK AgentEvaluator discovery shim — populated lazily to avoid import-time
-# side-effects (file I/O, model instantiation) in test / CI environments.
-try:
-    root_agent = create_coordinator_agent()
-except Exception:  # pragma: no cover
-    root_agent = None  # type: ignore[assignment]
+# Expose root_agent instance for native ADK AgentEvaluator discovery
+root_agent = create_coordinator_agent()

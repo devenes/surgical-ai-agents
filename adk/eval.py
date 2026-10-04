@@ -480,7 +480,7 @@ async def run_evaluation_suite(
 
     eval_report = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "model": model_name or "gemini-2.5-flash",
+        "model": model_name or "gemini-3.8-flash",
         "num_cases": len(test_cases),
         "num_runs_per_case": num_runs,
         "total_executions": len(test_cases) * num_runs,

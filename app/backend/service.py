@@ -588,7 +588,7 @@ class AppService:
                 "future completion date",
                 "5-year survival",
             ]
-        elif "bowel preparation" in q or ("oral antibiotics" in q and "colorectal" in q):
+        elif "bowel preparation" in q or "oral antibiotics" in q:
             pop = "Adults undergoing elective colorectal surgical resection"
             interv = "Combined mechanical bowel preparation with oral nonabsorbable antibiotics (MBP + OAB)"
             comp = "Oral antibiotics alone (OAB) or no bowel preparation"
