@@ -21,6 +21,7 @@ This folder contains the complete operational material for running the 60-minute
 | [`storyboard.md`](storyboard.md) | **Educational Narrative**: The conceptual pedagogical journey from raw surgical dilemma to AI prototype. |
 | [`troubleshooting.md`](troubleshooting.md) | **Live Ops**: Diagnostics and rapid recovery steps for common classroom, network, and UI errors. |
 | [`fallback-demo.md`](fallback-demo.md) | **Contingency Plans**: 4 graded fallback workflows (A, B, C, D) if live cloud services encounter friction. |
+| [`cloud-deployment.md`](cloud-deployment.md) | **Additional Track**: Cloud Run and production container deployment using Cloud Buildpacks or Dockerfile with least-privilege IAM service accounts. |
 
 ---
 

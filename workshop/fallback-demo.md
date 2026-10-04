@@ -10,10 +10,39 @@
 
 | Fallback Tier | Trigger Condition | Contingency Workflow | Fallback Asset / Command |
 | :---: | :--- | :--- | :--- |
+| **Tier 0 (Primary Defense)** | **Venue Wi-Fi drops, captive portal disconnects, or zero conference connectivity** | **Switch to Local Web UI & CLI in Zero-Token Offline Mode** | **`uv run python -m app.cli all` (Toggle 'Offline Mock Mode') or `uv run python -m adk.run --offline`** |
 | **Fallback A** | Multi-agent orchestration fails or subagent loops | Switch to a single-agent grounded query in Agent Studio | Single-agent prompt with Google Search grounding tool |
 | **Fallback B** | Google Search grounding quota exhausted or failing | Present pre-verified public literature sources and society links | Pre-computed citation cache in `examples/research-questions/` |
-| **Fallback C** | Agent Studio UI is unresponsive, slow, or 500 error | Execute programmatic ADK CLI baseline or show verified JSON | Terminal: `.venv/bin/python -m adk.run` or pre-computed JSON |
+| **Fallback C** | Agent Studio UI is unresponsive, slow, or 500 error | Execute programmatic ADK CLI baseline or show verified JSON | Terminal: `uv run python -m adk.run --offline` or pre-computed JSON |
 | **Fallback D** | Attendee exercise friction or venue network down | Presenter-led interactive chalkboard / slide exercise | Project Transformation Worksheet (Participant Guide) |
+
+---
+
+## ⚡ 10-Second Wi-Fi Emergency Switchover Protocol
+
+If conference Wi-Fi cuts out at the podium during the live demonstration:
+1. **Remain calm & narrate the pivot** (0-3s):
+   > *"Notice how real-world clinical hospital systems require local edge fallback when hospital WAN links degrade. We built that exact zero-token local simulation layer into our workshop stack."*
+2. **Switch UI Toggle or Terminal Flag** (3-6s):
+   - **In Web UI (`http://127.0.0.1:8501`)**: Check the sidebar checkbox **"⚡ Offline Mock Mode (Zero Tokens / No API)"**.
+   - **In Terminal**: Run `uv run python -m adk.run --offline` or `uv run python multimodal-demo/adk_multimodal_example.py --offline --follow-up`.
+3. **Execute Benchmark Scenario** (6-10s):
+   - Select any of the 16 preset benchmark scenarios (e.g., `NORM-01 Colorectal Prehab`, `EDGE-01 Missing Evidence`, or `EDGE-07 Patient Safety Refusal`).
+   - The system responds deterministically in <100ms with verified literature synthesis, PICOT decomposition, consensus matrices, and 100% JSON schema conformity.
+
+---
+
+## Tier 0: Local Web UI in Zero-Token Offline Mode
+
+### When to Use
+Whenever conference Wi-Fi is unstable, latency exceeds 5 seconds, or internet access is lost completely.
+
+### Capabilities Fully Preserved Offline
+1. **Multimodal Studio**: Critical View of Safety (CVS) schematic visual inspection with 3 Strasberg anatomical criteria, Calot's triangle clearance, and research follow-up.
+2. **2-Subagent Consensus Pipeline**: Full PICOT decomposition, Evidence Specialist trial synthesis, Guideline Specialist recommendations, and Consensus Matrix (Agreements & Disagreements) across all 16 evaluation benchmark cases.
+3. **5-Dimension Comparative Scorecard**: Head-to-head comparison against the monolithic ungrounded baseline demonstrating hallucination risk, epistemic humility (`not_found: true`), and clinical safety boundaries.
+4. **Safety Boundary Enforcement**: Strict refusal and educational reframing for patient-specific clinical queries (e.g., 72yo albumin 2.8 query).
+5. **JSON Schema Compliance**: 100% strict validation against `agents/coordinator/output-schema.json`.
 
 ---
 

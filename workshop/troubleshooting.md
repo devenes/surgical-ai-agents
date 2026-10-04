@@ -10,16 +10,21 @@
 
 ```
 Issue Observed
+  ├── Venue Wi-Fi Drops / DNS Failure / Captive Portal Timeout
+  │     └──► Switch to Tier 0 Offline Mode (Zero Tokens, Zero Network)
+  │           ├── Web UI: Check "⚡ Offline Mock Mode" in sidebar
+  │           ├── CLI Multi-Agent: uv run python -m adk.run --offline
+  │           └── Multimodal CLI:  uv run python multimodal-demo/adk_multimodal_example.py --offline --follow-up
   ├── Agent Studio UI Not Loading / 500 Error
-  │     └──► Check GCP Console Status ──► Switch to Fallback C (Local ADK CLI / Static JSON)
+  │     └──► Switch to Tier 0 Local Web Workspace: uv run python -m app.cli all
   ├── Agent Studio Preview Hangs (> 90 seconds)
-  │     └──► Stop Generation ──► Check Search Grounding ──► Switch to Fallback A or C
+  │     └──► Stop Generation ──► Switch to Fallback A or Tier 0 CLI: uv run python -m adk.run --offline
   ├── Google Search Tool Error / Quota Exhaustion
-  │     └──► Switch to Fallback B (Pre-computed URLs & Cached Evidence)
+  │     └──► Switch to Fallback B (Pre-computed URLs & Cached Evidence) or Tier 0 Mock Mode
   ├── Output Not Conforming to JSON Schema
-  │     └──► Re-prompt with explicit JSON prefix, or present ADK Pydantic Model
+  │     └──► Show agents/coordinator/output-schema.json and run uv run python -m adk.run --offline
   └── Attendee Enters Patient Vignette
-        └──► Reiterate Safety Policy ──► Use Participant Transformation Pattern
+        └──► Run EDGE-07-PATIENT-SAFETY to demonstrate automated safety refusal and reframing
 ```
 
 ---
@@ -32,13 +37,13 @@ Issue Observed
   1. Click **Stop** in the Preview chat window.
   2. Explain to audience: *"Notice that live web grounding actively negotiates real-time external publisher portals. While this verifies citations, it can encounter intermittent external network latency."*
   3. Open the **Events / Trace** drawer to show the subagent query that was issued.
-  4. Immediately switch to **Fallback C**: Open the pre-computed verified output [`examples/research-questions/colorectal-prehabilitation-gemini-3-8.json`](../examples/research-questions/colorectal-prehabilitation-gemini-3-8.json) or execute `.venv/bin/python -m adk.run` in the terminal.
+  4. Immediately switch to **Fallback C / Tier 0**: Open the pre-computed verified output [`examples/research-questions/colorectal-prehabilitation-gemini-3-8.json`](../examples/research-questions/colorectal-prehabilitation-gemini-3-8.json) or execute `uv run python -m adk.run --offline` in the terminal.
 
 ### Symptom 2: Grounding Tool Returns Rate-Limit / Quota Error
 - **Probable Cause**: High concurrency from multiple simultaneous queries exhausting Google Search grounding API quotas.
 - **Immediate Action**:
   1. Do not repeatedly hammer the Send button.
-  2. Switch to **Fallback B**: Present the cached evidence brief and walk through the pre-verified source citations and PMIDs.
+  2. Switch to **Fallback B / Tier 0**: Toggle **Offline Mock Mode** in the Web UI or execute terminal commands in `--offline` mode.
 
 ### Symptom 3: Coordinator Emits Markdown Text Instead of Pure JSON
 - **Probable Cause**: Absence of strict schema enforcement toggle in Agent Studio canvas allowed the LLM to wrap the response in conversational preamble (e.g., *"Here is your evidence brief:"*).
@@ -52,10 +57,23 @@ Issue Observed
 - **Immediate Action**:
   1. Praise the clinical relevance of the question, but immediately enforce the safety boundary:
      > *"That is an important clinical question, but this highlights our core safety guardrail: this system is an academic research assistant, not a clinical decision support system. We must never use real patient data or ask an AI to decide whether surgery should proceed."*
-  2. Demonstrate how to transform that clinical dilemma into an epidemiological PICOT research question using the pattern in `workshop/demo-prompts.md`.
+  2. Demonstrate case `EDGE-07-PATIENT-SAFETY` in the Web UI or terminal (`uv run python -m adk.run --offline "My 72-year-old patient with albumin 2.8..."`) to showcase automated refusal and educational redirection.
 
 ### Symptom 5: Conference Wi-Fi Completely Fails
-- **Probable Cause**: Venue network outage.
+- **Probable Cause**: Venue network outage, firewall blocking Google Cloud APIs, or captive portal session expiration.
 - **Immediate Action**:
-  1. Switch laptop connection to cellular personal hotspot.
-  2. If all cloud connectivity is unavailable, launch **Fallback D**: Present the slides and lead a collaborative whiteboard exercise decomposing a volunteer's surgical problem into PICOT and subagent roles.
+  1. **Do not panic or stall the lecture.**
+  2. Switch to **Tier 0 Local Workspace (Zero Tokens, Zero Network)**:
+     ```bash
+     # Launch local FastAPI + Streamlit apps (runs 100% locally on localhost)
+     uv run python -m app.cli all
+     ```
+  3. Ensure the checkbox **"⚡ Offline Mock Mode (Zero Tokens / No API)"** is checked in the Streamlit UI.
+  4. Demonstrate the full curriculum using the 16 pre-cached benchmark inquiries and multimodal vision studio.
+  5. If running in terminal, execute:
+     ```bash
+     uv run python -m adk.run --offline
+     uv run python multimodal-demo/adk_multimodal_example.py --offline --follow-up
+     ```
+  6. Explain the engineering rationale to attendees:
+     > *"In hospital operating rooms and acute surgical care, systems cannot fail when Wide Area Networks drop. Our entire multi-agent architecture incorporates a zero-token deterministic offline simulation layer designed specifically for mission-critical edge resilience."*

@@ -9,6 +9,37 @@
 
 ---
 
+## 🛡️ T-30 Minute Pre-Workshop Rehearsal Protocol (Podium Verification)
+
+Thirty minutes before attendees enter the conference hall, run the automated dry-run rehearsal command in your terminal:
+```bash
+uv run python -m app.cli rehearse
+```
+
+### What this verifies deterministically in < 2 seconds:
+- **Zero-Token Assurance**: Confirms 100% of required demo data is locally cached with zero API calls.
+- **Multimodal Studio**: Validates local rendering of the laparoscopic Critical View of Safety (CVS) schematic and neutral educational vision output.
+- **All 16 Benchmark Cases**: Tests PICOT decomposition, Evidence Specialist trials, Guideline Specialist statements, and Consensus Matrices across 8 Normal (`NORM-01` to `NORM-08`) and 8 Edge Cases (`EDGE-01` to `EDGE-08`).
+- **Epistemic Humility Triggers**: Verifies `evidence_not_found: true` (`EDGE-01`, `EDGE-05`, `EDGE-08`) and `guidelines_not_found: true` (`EDGE-02`).
+- **Disagreement Matrices**: Verifies nuanced clinical divergence (`EDGE-03`, `EDGE-04`, `NORM-06`).
+- **Patient Safety Guardrails**: Confirms automated interception and educational refusal for clinical trap queries (`EDGE-07`).
+- **JSON Schema Validation**: Guarantees strict conformity against `agents/coordinator/output-schema.json`.
+
+### Podium Launch Checklist:
+1. Terminal 1: Launch local Web UI:
+   ```bash
+   uv run python -m app.cli all
+   ```
+2. Open browser at `http://127.0.0.1:8501`.
+3. If venue Wi-Fi is slow or blocked by firewall/captive portal, **keep "⚡ Offline Mock Mode (Zero Tokens / No API)" checked in the sidebar**.
+4. Keep Terminal 2 open for instant zero-token CLI fallbacks:
+   ```bash
+   uv run python -m adk.run --offline
+   uv run python multimodal-demo/adk_multimodal_example.py --offline --follow-up
+   ```
+
+---
+
 ## Timeline Overview
 
 | Time Window | Segment | Focus | Surface |

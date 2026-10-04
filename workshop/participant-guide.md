@@ -98,3 +98,4 @@ After the workshop, you can take your structured AI agent design and develop it 
 - **Grant Proposal / Research Protocol**: Use the identified `areas_of_disagreement` and `uncertainty` to formulate an investigator-initiated clinical trial hypothesis.
 - **Institutional Quality Improvement (QI)**: Compare your hospital's surgical clinical pathways against the catalog of society guidelines and identify practice gaps.
 - **Code Implementation**: Inspect the developer ADK implementation in this repository to see how to deploy this multi-agent system into automated Python scripts or local pipelines.
+- **Cloud & Container Deployment (Additional Track)**: For hosting the interactive Web Studio on hospital intranets or Google Cloud Run using Cloud Buildpacks or Docker, see [`cloud-deployment.md`](cloud-deployment.md).
