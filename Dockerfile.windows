@@ -1,0 +1,24 @@
+# Production Windows Container Dockerfile for Surgical AI Multi-Agent & Multimodal Application
+# Compatible with Windows Server 2022 (ltsc2022) runtime on Windows Docker Engine
+
+FROM python:3.12-windowsservercore-ltsc2022
+
+# Prevent Python from buffering stdout/stderr and writing .pyc files
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8080 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR C:\app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application source code
+COPY . C:\app
+
+EXPOSE 8080
+
+CMD ["python", "-m", "streamlit", "run", "app/frontend/main.py", "--server.port", "8080", "--server.address", "0.0.0.0", "--server.enableCORS", "false", "--server.enableXsrfProtection", "false", "--server.headless", "true"]
