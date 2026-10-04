@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://surgical-ai.org/schemas/evidence-output.json",
+  "title": "EvidenceAgentOutput",
+  "description": "Structured scholarly evidence output produced by the Evidence Agent",
+  "type": "object",
+  "properties": {
+    "query_summary": {
+      "type": "string",
+      "description": "Normalized description of the literature search query executed"
+    },
+    "not_found": {
+      "type": "boolean",
+      "description": "True if no verified scholarly literature meeting inclusion criteria was identified"
+    },
+    "not_found_reason": {
+      "type": "string",
+      "description": "Detailed justification when reliable evidence was not found"
+    },
+    "overall_evidence_quality": {
+      "type": "string",
+      "enum": ["high", "moderate", "low", "very_low", "insufficient_data"],
+      "description": "Aggregate GRADE-style quality assessment of identified studies"
+    },
+    "studies": {
+      "type": "array",
+      "description": "List of verified scientific publications matching the research question",
+      "items": {
+        "type": "object",
+        "properties": {
+          "study_title": {
+            "type": "string",
+            "description": "Exact title of the published article"
+          },
+          "authors_or_organization": {
+            "type": "string",
+            "description": "Primary author (e.g. Smith et al.) or collaborative research group"
+          },
+          "publication_year": {
+            "type": "integer",
+            "description": "Year of publication"
+          },
+          "evidence_type": {
+            "type": "string",
+            "enum": [
+              "systematic_review_meta_analysis",
+              "randomized_controlled_trial",
+              "prospective_cohort",
+              "retrospective_study",
+              "consensus_or_expert_review",
+              "other"
+            ],
+            "description": "Categorization within clinical evidence hierarchy"
+          },
+          "sample_size": {
+            "type": "string",
+            "description": "Number of participants or included trials (e.g., 'n=450' or '18 RCTs, 2,140 patients')"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Direct, verified URL to PubMed, DOI, or official journal page"
+          },
+          "primary_endpoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Endpoints evaluated (e.g. 30-day morbidity, length of stay, complications)"
+          },
+          "key_findings": {
+            "type": "string",
+            "description": "Objective summary of supported clinical and surgical findings"
+          },
+          "effect_estimates": {
+            "type": "string",
+            "description": "Summary metrics if reported (e.g. RR 0.72 [95% CI 0.55-0.94], p=0.02)"
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Key methodological or generalizability limitations identified in the study"
+          },
+          "conflicting_notes": {
+            "type": "string",
+            "description": "Specific conflicts or discrepancies compared to other literature"
+          }
+        },
+        "required": [
+          "study_title",
+          "authors_or_organization",
+          "publication_year",
+          "evidence_type",
+          "url",
+          "key_findings",
+          "limitations"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "evidence_synthesis": {
+      "type": "string",
+      "description": "Cohesive summary synthesizing all identified literature"
+    }
+  },
+  "required": [
+    "query_summary",
+    "not_found",
+    "overall_evidence_quality",
+    "studies",
+    "evidence_synthesis"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://surgical-ai.org/schemas/guideline-output.json",
+  "title": "GuidelineAgentOutput",
+  "description": "Structured clinical practice guideline output produced by the Guideline Agent",
+  "type": "object",
+  "properties": {
+    "query_summary": {
+      "type": "string",
+      "description": "Normalized description of the guideline search scope"
+    },
+    "not_found": {
+      "type": "boolean",
+      "description": "True if no verified guidelines from recognized clinical bodies were identified"
+    },
+    "not_found_reason": {
+      "type": "string",
+      "description": "Explanation when no formal guidelines could be verified"
+    },
+    "guidelines": {
+      "type": "array",
+      "description": "Catalog of verified clinical guidelines and consensus statements",
+      "items": {
+        "type": "object",
+        "properties": {
+          "organization": {
+            "type": "string",
+            "description": "Issuing professional society, government body, or guideline agency (e.g. ASCRS, ERAS Society, NICE)"
+          },
+          "guideline_title": {
+            "type": "string",
+            "description": "Full formal title of the guideline or consensus document"
+          },
+          "publication_or_update_year": {
+            "type": "integer",
+            "description": "Year of publication, revision, or official reaffirmation"
+          },
+          "document_type": {
+            "type": "string",
+            "enum": [
+              "formal_guideline",
+              "consensus_statement",
+              "practice_advisory",
+              "clinical_pathway"
+            ],
+            "description": "Official classification of the document"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Verified URL to the society repository or journal publication"
+          },
+          "target_population": {
+            "type": "string",
+            "description": "Patient population and surgical domain addressed by the guideline"
+          },
+          "recommendations": {
+            "type": "array",
+            "description": "Specific recommendation statements relevant to the inquiry",
+            "items": {
+              "type": "object",
+              "properties": {
+                "topic": {
+                  "type": "string",
+                  "description": "Specific topic or intervention (e.g., Preoperative exercise, Nutritional screening)"
+                },
+                "recommendation_statement": {
+                  "type": "string",
+                  "description": "Precise summary or verbatim statement of the recommendation"
+                },
+                "strength_of_recommendation": {
+                  "type": "string",
+                  "description": "Grade or strength (e.g., 'Strong', 'Conditional', 'Weak', 'Grade A', 'Ungraded')"
+                },
+                "level_of_evidence": {
+                  "type": "string",
+                  "description": "Evidence base classification (e.g., 'High quality', 'Moderate quality', 'Level 1b')"
+                }
+              },
+              "required": [
+                "topic",
+                "recommendation_statement",
+                "strength_of_recommendation"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "divergence_notes": {
+            "type": "string",
+            "description": "Points of divergence or contrast with other societies"
+          }
+        },
+        "required": [
+          "organization",
+          "guideline_title",
+          "publication_or_update_year",
+          "document_type",
+          "url",
+          "recommendations"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "guideline_synthesis": {
+      "type": "string",
+      "description": "Synthesized perspective of overall institutional consensus and recommendations"
+    }
+  },
+  "required": [
+    "query_summary",
+    "not_found",
+    "guidelines",
+    "guideline_synthesis"
+  ],
+  "additionalProperties": false
+}
