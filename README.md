@@ -79,6 +79,7 @@ To prevent architectural conflation, the repository clearly distinguishes three 
 
 | Surface | Environment | Modality | Primary Purpose |
 | :--- | :--- | :--- | :--- |
+| **Interactive Web UI** | Local Web (`app/` FastAPI + Streamlit) | Multimodal & Multi-Agent | User-friendly interactive dashboard with tabs for vision inspection, 2-subagent consensus, and query decomposition. |
 | **Agent Studio Implementation** | Google Cloud Agent Studio Canvas | Text-based Multi-Agent | Primary hands-on workshop demonstration for interactive visual inspection. |
 | **ADK Reference Implementation** | Python (`google-adk` + `google-genai`) | Text-based Multi-Agent | Programmatic reference implementation for automated testing, evaluation, and CLI runs. |
 | **Supplemental Multimodal Demo** | Standalone Script (`multimodal-demo/`) | Vision-Language | Supplemental 5-minute showcase of operative anatomical observation; strictly isolated from research canvas. |
@@ -231,9 +232,41 @@ surgical-ai-agents/
 ├── backup/                            # Historical exploratory prototypes & draft archives
 │   └── README.md                      # Catalog of archived experimental workflows
 │
-└── app/                               # Scaffolding reserved for future interactive UI
-    └── README.md
+└── app/                               # Lightweight Web UI (FastAPI + Streamlit)
+    ├── README.md                      # Web UI architecture and component documentation
+    ├── cli.py                         # Unified launcher (python -m app.cli)
+    ├── backend/                       # FastAPI REST backend (/docs Swagger OpenAPI)
+    │   ├── api.py                     # API routes (/api/health, /api/models, /api/multimodal, etc.)
+    │   ├── schemas.py                 # Pydantic validation contracts
+    │   └── service.py                 # AppService coordinating GenAI SDK & zero-token mock
+    └── frontend/                      # Streamlit interactive application
+        ├── main.py                    # Multi-tab dashboard (Vision, Multi-Agent, PICOT)
+        └── components.py              # Visual timeline, consensus matrix, and controls
 ```
+
+---
+
+## 🖥️ Interactive Web UI (FastAPI + Streamlit)
+
+A lightweight interactive web application is available in [`app/`](app/):
+- **Multimodal Vision Studio**: Upload images or select surgical schematics (e.g. Critical View of Safety) for non-diagnostic anatomical observation.
+- **2-Subagent Consensus Studio**: Coordinator orchestrating Evidence Specialist (Sub-Agent 1) and Guideline Specialist (Sub-Agent 2) with visual step timelines and side-by-side findings.
+- **Zero-Token Offline Mode**: High-fidelity simulation mode to test and explore the UI with **0 tokens consumed**.
+
+### Launching the UI Locally
+
+```bash
+# Option 1: Launch both FastAPI and Streamlit concurrently (Recommended)
+uv run python -m app.cli all
+
+# Option 2: Launch FastAPI backend only (http://127.0.0.1:8000/docs)
+uv run python -m app.cli backend --backend-port 8000
+
+# Option 3: Launch Streamlit frontend only (http://localhost:8501)
+uv run python -m app.cli frontend --frontend-port 8501
+```
+
+*For comprehensive setup details and troubleshooting, see the [Local UI Setup Guide](docs/local-ui-setup.md).*
 
 ---
 
@@ -241,7 +274,7 @@ surgical-ai-agents/
 
 ### Prerequisites
 - Python 3.10+ (tested on Python 3.12)
-- Google Cloud Project with Vertex AI API enabled
+- Google Cloud Project with Vertex AI API enabled (for live mode; not needed for offline mode)
 - Google Cloud Application Default Credentials (`gcloud auth application-default login`)
 
 ### Installation
@@ -309,14 +342,17 @@ The repository contains offline unit tests and live integration tests:
 
 ### 1. Offline Unit Tests (Safe, No Tokens Consumed)
 ```bash
-# Runs offline schema, model, and agent construction tests
-.venv/bin/pytest tests/test_unit_schemas.py tests/test_unit_agents.py
+# Runs full offline suite (31 unit tests across agents, schemas, API routes, and services)
+uv run pytest
+
+# Run only Web UI unit tests
+uv run pytest tests/test_unit_app_*.py -v
 ```
 
 ### 2. Live Integration Tests (Requires Active Vertex AI Credentials)
 ```bash
 # Note: Consumes model inference and search grounding
-.venv/bin/pytest -m integration tests/test_integration_live.py
+uv run pytest -m integration tests/test_integration_live.py
 ```
 
 ---
@@ -335,10 +371,11 @@ All workshop presentation, facilitation, and troubleshooting documents are organ
 ## 📊 Current Status
 
 - **Status**: **Workshop Prototype & Reference Implementation**
+- **Web UI**: Interactive FastAPI + Streamlit interface with multimodal and 2-subagent capabilities.
 - **ADK Core**: Fully wired with single-turn subagent delegation and Pydantic schemas.
 - **Grounding**: Connected to Google Search Grounding via official ADK tools.
 - **Schemas**: Validated against JSON Schema Draft-07 contracts.
-- **Unit Testing**: 8 offline unit tests verified and passing.
+- **Unit Testing**: 31 offline unit tests verified and passing (0 tokens consumed).
 - **Safety**: Automated safety refusal triggers on patient-specific inquiries.
 
 ---
@@ -355,7 +392,7 @@ All workshop presentation, facilitation, and troubleshooting documents are organ
 ## 🗺️ Roadmap
 
 - [ ] **Phase 4A - Institutional RAG**: Integration with Vertex AI Search for private hospital clinical pathways and local antibiograms.
-- [ ] **Phase 4B - Interactive Workshop UI**: Lightweight web runner (FastAPI + Streamlit/React) in [`app/`](app/).
+- [x] **Phase 4B - Interactive Workshop UI**: Lightweight web runner (FastAPI + Streamlit) in [`app/`](app/).
 - [ ] **Phase 4C - Cloud Run Deployment**: Containerized deployment for workshop classroom environments.
 
 ---
