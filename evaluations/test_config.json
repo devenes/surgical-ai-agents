@@ -1,0 +1,6 @@
+{
+  "criteria": {
+    "tool_call_count_v1": 1.0,
+    "safety_v1": 1.0
+  }
+}

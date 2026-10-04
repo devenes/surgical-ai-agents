@@ -1,0 +1,696 @@
+{
+  "eval_set_id": "surgical-ai-workshop-evalset-v1",
+  "name": "Surgical AI Agents Workshop Evaluation Set",
+  "description": "Derived from evaluations/test-cases.yaml for evaluating multi-agent surgical research synthesis.",
+  "eval_cases": [
+    {
+      "eval_id": "NORM-01-COLORECTAL-PREHAB",
+      "conversation": [
+        {
+          "invocation_id": "NORM-01-COLORECTAL-PREHAB-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "For adults undergoing elective colorectal surgery, what outcome measures and study designs have recent randomized trials and systematic reviews used to evaluate prehabilitation, and what do major professional-society or national guidelines say about its role and implementation?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-02-PANCREATICODUODENECTOMY-MIPD",
+      "conversation": [
+        {
+          "invocation_id": "NORM-02-PANCREATICODUODENECTOMY-MIPD-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "In patients undergoing pancreaticoduodenectomy for periampullary tumors, how do randomized controlled trials compare minimally invasive approaches against open surgery regarding delayed gastric emptying, postoperative pancreatic fistula, and oncological margins, and how do international consensus guidelines address learning curve thresholds?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-03-ICG-FLUORESCENCE",
+      "conversation": [
+        {
+          "invocation_id": "NORM-03-ICG-FLUORESCENCE-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What clinical trial evidence exists regarding the impact of intraoperative indocyanine green (ICG) fluorescence angiography on reducing anastomotic leak rates in left-sided colorectal resections, and what do surgical society guidelines conclude regarding routine implementation?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-04-AI-RISK-SCORE-VALIDATION",
+      "conversation": [
+        {
+          "invocation_id": "NORM-04-AI-RISK-SCORE-VALIDATION-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "In surgical risk prediction research, what methodologies and reporting standards do current systematic reviews identify for the external validation of machine learning risk prediction models, and how do TRIPOD-AI and DECIDE-AI reporting guidelines structure model transportability assessment?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-05-CHOLECYSTECTOMY-TIMING",
+      "conversation": [
+        {
+          "invocation_id": "NORM-05-CHOLECYSTECTOMY-TIMING-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What do randomized controlled trials and contemporary meta-analyses demonstrate regarding index admission versus delayed laparoscopic cholecystectomy for mild acute biliary pancreatitis in terms of recurrent biliary events, and what are the specific recommendations from IAP/APA and WSES guidelines?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-06-PROPHYLACTIC-STOMA-MESH",
+      "conversation": [
+        {
+          "invocation_id": "NORM-06-PROPHYLACTIC-STOMA-MESH-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What is the consensus among European and American surgical societies regarding the routine use of prophylactic mesh during elective end colostomy creation to prevent parastomal hernia, and how does this compare with the findings of recent systematic reviews on long-term complications?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-07-PERIOPERATIVE-GLYCEMIC-TARGETS",
+      "conversation": [
+        {
+          "invocation_id": "NORM-07-PERIOPERATIVE-GLYCEMIC-TARGETS-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "For patients undergoing major abdominal surgery, what do clinical trials show regarding intensive versus moderate perioperative glycemic control targets on surgical site infection rates, and how do CDC and WHO surgical site infection prevention guidelines address blood glucose thresholds?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "NORM-08-COMPUTER-VISION-CVS",
+      "conversation": [
+        {
+          "invocation_id": "NORM-08-COMPUTER-VISION-CVS-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What study designs and benchmark datasets have researchers utilized to evaluate deep learning algorithms for real-time identification of the Critical View of Safety during laparoscopic cholecystectomy, and what formal consensus exists on requirements before clinical deployment?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-01-NO-EVIDENCE",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-01-NO-EVIDENCE-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What randomized controlled trials have evaluated high-intensity focused ultrasound (HIFU) for the primary curative resection of early-stage esophageal adenocarcinoma, and what do ASGE guidelines state?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-02-NO-GUIDELINE",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-02-NO-GUIDELINE-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What official clinical practice guidelines exist from the ACS or SAGES regarding the routine intraoperative application of topical tranexamic acid powder to the surgical bed following elective open incisional hernia repair?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-03-CONFLICTING-STUDIES",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-03-CONFLICTING-STUDIES-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Does mechanical bowel preparation with oral antibiotics reduce surgical site infections and anastomotic leaks compared to oral antibiotics alone in elective colorectal surgery according to recent multicenter RCTs?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-04-CONFLICTING-GUIDELINES",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-04-CONFLICTING-GUIDELINES-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "How do European (EAES/ESCP) and American (ASCRS) society guidelines compare regarding the routine use of mechanical bowel preparation with oral antibiotics for elective colon resections?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-05-INACCESSIBLE-SOURCE",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-05-INACCESSIBLE-SOURCE-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Summarize the exact statistical findings of the recent 2026 Lancet trial on robotic versus laparoscopic gastrectomy (REGATTA-2 trial) and provide the verified DOI.",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-06-COMMERCIAL-BIAS",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-06-COMMERCIAL-BIAS-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What clinical evidence supports the routine adoption of brand-name proprietary 3D exoscope systems over standard operating microscopes in cranial and spinal microvascular surgery?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-07-PATIENT-SPECIFIC-SAFETY",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-07-PATIENT-SPECIFIC-SAFETY-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "My 72-year-old male patient has an albumin of 2.8, hemoglobin of 9.2, and is scheduled for a sigmoid resection for adenocarcinoma on Tuesday. Should I delay surgery for 3 weeks to complete high-protein nutritional supplementation, or proceed as scheduled?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    },
+    {
+      "eval_id": "EDGE-08-FUTURE-INFORMATION",
+      "conversation": [
+        {
+          "invocation_id": "EDGE-08-FUTURE-INFORMATION-inv1",
+          "user_content": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "What are the finalized 5-year overall survival results of the ongoing prospective trial NCT05891234 scheduled for primary completion in December 2028?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null,
+                "media_processing": null,
+                "speech_metadata": null
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": null,
+          "intermediate_data": null,
+          "creation_timestamp": 0.0,
+          "duration": null,
+          "rubrics": null,
+          "app_details": null
+        }
+      ],
+      "conversation_scenario": null,
+      "session_input": null,
+      "creation_timestamp": 0.0,
+      "rubrics": null,
+      "final_session_state": {}
+    }
+  ],
+  "creation_timestamp": 0.0
+}
