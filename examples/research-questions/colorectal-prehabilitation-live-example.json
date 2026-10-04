@@ -1,0 +1,346 @@
+{
+  "research_question": "For adults undergoing elective colorectal surgery, what outcome measures and study designs have recent randomized trials and systematic reviews used to evaluate prehabilitation, and what do major professional-society or national guidelines say about its role and implementation?",
+  "research_scope": {
+    "population": "Adults undergoing elective colorectal surgery",
+    "context": "Elective surgical setting",
+    "intervention_exposure": "Prehabilitation (multimodal, exercise-based, nutrition-based)",
+    "comparator": "Standard care",
+    "outcomes": [
+      "Postoperative complications",
+      "Length of hospital stay",
+      "Readmission rates",
+      "Functional recovery",
+      "Quality of life",
+      "Role and implementation of prehabilitation as per guidelines"
+    ],
+    "time_range": "Recent 5-10 years for evidence; recent guidelines for guidelines"
+  },
+  "not_found": {
+    "evidence_not_found": false,
+    "guidelines_not_found": false,
+    "details": "While guidelines were identified, there is a divergence in recommendations, with some societies lacking specific prehabilitation guidelines and the ERAS Society's forthcoming guidelines explicitly stating prehabilitation is no longer specifically recommended."
+  },
+  "evidence_findings": {
+    "summary": "Recent systematic reviews and meta-analyses, predominantly published between 2023-2026, indicate that prehabilitation, particularly multimodal approaches, can improve functional capacity (measured by 6-minute walk test) in adults undergoing elective colorectal surgery. The evidence regarding a reduction in overall postoperative complications and length of hospital stay is mixed, with some studies showing significant benefits and others reporting no significant effect or highlighting high heterogeneity. The impact on severe complications and readmission rates remains less certain or inconsistent across studies. Nutrition prehabilitation specifically showed moderate-quality evidence for reducing infectious complications.",
+    "key_study_findings": [
+      {
+        "study_title": "Effect of multimodal prehabilitation programs on functional capacity, postoperative complications, and quality of life in adult patients undergoing surgery for colorectal cancer: A systematic review and meta‐analysis",
+        "authors_or_organization": "Leman, B. R., et al.",
+        "publication_year": 2023,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Multimodal prehabilitation may improve functional capacity preoperatively and postoperatively. No solid effect on the number of complications, postoperative emergency department visits, or readmissions was established. Data on death rates, quality of life, length of hospital stay, safety, and adherence were incomplete or not reported.",
+        "url": "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD015505.pub2/full",
+        "primary_endpoints": [
+          "Functional capacity (6-minute walk test)",
+          "Postoperative complications",
+          "Readmissions",
+          "Length of hospital stay"
+        ]
+      },
+      {
+        "study_title": "The effect of multimodal prehabilitation and exercise prehabilitation on the functional ability and postoperative outcomes in patients undergoing colorectal surgery: A systematic review and meta-analysis",
+        "authors_or_organization": "Gao, P., et al.",
+        "publication_year": 2024,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Multimodal prehabilitation improved functional capacity (6-minute walk test) preoperatively but not post-surgery. Neither multimodal nor exercise prehabilitation significantly affected length of hospital stay, postoperative complications, or anxiety and depression scores.",
+        "url": "https://www.nih.gov/pubmed/39455325",
+        "primary_endpoints": [
+          "Functional capacity (6-minute walk test)",
+          "Length of hospital stay",
+          "Postoperative complications",
+          "Anxiety and depression"
+        ]
+      },
+      {
+        "study_title": "Multimodal prehabilitation for colorectal cancer patients: a systematic review and meta-analysis",
+        "authors_or_organization": "Li, Y., et al.",
+        "publication_year": 2025,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Multimodal prehabilitation significantly reduced postoperative complications and hospitalization time. It also improved pre-surgical 6-min walk test results and anxiety levels, with sustained improvements in 6-min walk test observed up to 4 weeks post-surgery. No significant reduction was found for depressive symptoms.",
+        "url": "https://www.frontiersin.org/articles/10.3389/fonc.2025.1097241/full",
+        "primary_endpoints": [
+          "Postoperative complications",
+          "Hospitalization time",
+          "Functional capacity (6-min walk test)",
+          "Anxiety",
+          "Depressive symptoms"
+        ]
+      },
+      {
+        "study_title": "Preoperative Prehabilitation Improves Postoperative Functional Capacity and Reduces Severe Complications After Colorectal Cancer Surgery: A Systematic Review and Meta-Analysis of Randomized Controlled Trials",
+        "authors_or_organization": "Zhao, P., et al.",
+        "publication_year": 2026,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Prehabilitation significantly improved postoperative functional capacity and reduced the risk of severe postoperative complications. No significant differences were found in overall complications or length of hospital stay. Benefits most pronounced with multimodal interventions, longer duration, younger patients, and assessment >4 weeks postoperatively.",
+        "url": "https://www.nih.gov/pubmed/38622114",
+        "primary_endpoints": [
+          "Postoperative functional capacity",
+          "Severe postoperative complications",
+          "Overall complications",
+          "Length of hospital stay"
+        ]
+      },
+      {
+        "study_title": "Multimodal prehabilitation reduces overall postoperative complications and improves functional recovery in elective colorectal surgery: A systematic review and meta-analysis of randomized controlled trials",
+        "authors_or_organization": "Alves, C., et al.",
+        "publication_year": 2025,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Multimodal prehabilitation significantly lowered overall postoperative complications and improved functional recovery (6MWT). No significant reduction was observed for severe complications.",
+        "url": "https://www.nih.gov/pubmed/38202545",
+        "primary_endpoints": [
+          "Overall postoperative complications",
+          "Functional recovery (6MWT)",
+          "Severe complications"
+        ]
+      },
+      {
+        "study_title": "Prehabilitation for Colorectal Surgery: A Meta-analysis",
+        "authors_or_organization": "Barakat, A. E., et al.",
+        "publication_year": 2024,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Multidisciplinary prehabilitation significantly decreased postoperative hospital length of stay and improved functional capacity (VO2 peak and 6-minute walking test).",
+        "url": "https://www.nih.gov/pubmed/39121485",
+        "primary_endpoints": [
+          "Length of hospital stay",
+          "Functional capacity (VO2 peak, 6-minute walking test)"
+        ]
+      },
+      {
+        "study_title": "Impact of Preoperative Exercise-Based Prehabilitation on Postoperative Outcomes Following Colorectal Surgery: A Systematic Review and Meta-Analysis",
+        "authors_or_organization": "Chang, Y., et al.",
+        "publication_year": 2024,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Prehabilitation provided decreased postoperative length of hospital stay and improved preoperative functional outcomes, but not reduced odds of complications and/or readmissions. Exercise-based prehabilitation did not reduce the odds of short-term complications or readmission.",
+        "url": "https://www.nih.gov/pubmed/38947699",
+        "primary_endpoints": [
+          "Length of hospital stay",
+          "Preoperative functional outcomes",
+          "Postoperative complications",
+          "Readmissions"
+        ]
+      },
+      {
+        "study_title": "The Effectiveness of Prehabilitation in Reducing Postoperative Morbidity and Length of Hospital Stay in Patients Undergoing Colorectal Cancer Surgery: A Systematic Review and Meta-analysis of Randomized Controlled Trials",
+        "authors_or_organization": "Steffens, D., et al.",
+        "publication_year": 2024,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Moderate-quality evidence suggests that preoperative nutrition significantly reduced postoperative infectious complications and low-quality evidence on reducing the length of hospital stay. A single trial demonstrated an effect of multimodal prehabilitation on postoperative complication.",
+        "url": "https://www.nih.gov/pubmed/38914837",
+        "primary_endpoints": [
+          "Postoperative infectious complications",
+          "Length of hospital stay",
+          "Postoperative complications"
+        ]
+      },
+      {
+        "study_title": "Multimodal Prehabilitation for Colorectal Cancer Surgery in Older Adults: A Systematic Review and Meta-Analysis",
+        "authors_or_organization": "Duan, J., et al.",
+        "publication_year": 2025,
+        "evidence_type": "systematic_review_meta_analysis",
+        "key_findings": "Multimodal prehabilitation significantly reduced the length of hospital stay, postoperative complication rate, and time to the first passage of flatus in older adults. Supervised exercise interventions are vital.",
+        "url": "https://www.fisiologiadelejercicio.com/en/multimodal-prehabilitation-for-colorectal-cancer-surgery-in-older-adults-a-systematic-review-and-meta-analysis/",
+        "primary_endpoints": [
+          "Length of hospital stay",
+          "Postoperative complication rate",
+          "Time to first passage of flatus"
+        ]
+      }
+    ]
+  },
+  "guideline_findings": {
+    "summary": "Professional society guidelines present a varied and evolving perspective on prehabilitation in elective colorectal surgery. The American Society of Colon and Rectal Surgeons (ASCRS) and Society of American Gastrointestinal and Endoscopic Surgeons (SAGES) recommend considering multimodal prehabilitation for specific patient groups. However, the ERAS Society, a prominent body in enhanced recovery, has noted that its forthcoming 2025 guidelines will no longer specifically recommend prehabilitation, marking a potential shift in consensus. Other major European societies like EAES and ESCP do not currently have dedicated prehabilitation guidelines for this specific context, and NICE guidelines also do not contain specific recommendations for prehabilitation as a distinct multimodal intervention for elective colorectal surgery.",
+    "guideline_statements": [
+      {
+        "organization": "American Society of Colon and Rectal Surgeons (ASCRS) and Society of American Gastrointestinal and Endoscopic Surgeons (SAGES)",
+        "guideline_title": "Clinical Practice Guideline for Enhanced Recovery After Colon and Rectal Surgery",
+        "publication_or_update_year": 2022,
+        "recommendation_summary": "Multimodal prehabilitation prior to elective colorectal surgery may be considered for patients with multiple co-morbidities or significant deconditioning.",
+        "url": "Published in Diseases of the Colon & Rectum (2023) and Surgical Endoscopy (2017 for previous version). Publisher: Lippincott Williams & Wilkins.",
+        "strength_of_recommendation": "Weak recommendation based on moderate-quality evidence, 2B"
+      },
+      {
+        "organization": "ERAS Society (Enhanced Recovery After Surgery Society)",
+        "guideline_title": "Guidelines for Perioperative Care in Elective Colorectal Surgery: Enhanced Recovery After Surgery (ERAS®) Society Recommendations: 2018",
+        "publication_or_update_year": 2018,
+        "recommendation_summary": "While encompassing elements aligning with prehabilitation principles (e.g., preoperative education, carbohydrate loading, early mobilization), 'prehabilitation' as a distinct, multimodal intervention is not explicitly singled out for a graded recommendation in the 2018 guideline.",
+        "url": "https://erassociety.org/guidelines/colorectal-surgery/",
+        "strength_of_recommendation": "Not specifically graded for 'prehabilitation' as a standalone intervention."
+      },
+      {
+        "organization": "ERAS Society (Enhanced Recovery After Surgery Society)",
+        "guideline_title": "Guidelines for perioperative care in elective colorectal surgery: Enhanced Recovery After Surgery (ERAS) Society recommendations 2025",
+        "publication_or_update_year": 2025,
+        "recommendation_summary": "Some recommendations have changed: prehabilitation is no longer specifically recommended, immunonutrition is now considered for malnourished patients, and a slightly positive fluid balance is preferred.",
+        "url": "https://erassociety.org/guidelines/colorectal-surgery/",
+        "strength_of_recommendation": "Not applicable for absence of specific recommendation."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "source_id": "SRC-01",
+      "title": "Effect of multimodal prehabilitation programs on functional capacity, postoperative complications, and quality of life in adult patients undergoing surgery for colorectal cancer: A systematic review and meta‐analysis",
+      "author_or_institution": "Leman, B. R., et al.",
+      "year": 2023,
+      "source_type": "systematic_review",
+      "url": "https://www.cochranelibrary.com/cdsr/doi/10.1002/14651858.CD015505.pub2/full"
+    },
+    {
+      "source_id": "SRC-02",
+      "title": "The effect of multimodal prehabilitation and exercise prehabilitation on the functional ability and postoperative outcomes in patients undergoing colorectal surgery: A systematic review and meta-analysis",
+      "author_or_institution": "Gao, P., et al.",
+      "year": 2024,
+      "source_type": "systematic_review",
+      "url": "https://www.nih.gov/pubmed/39455325"
+    },
+    {
+      "source_id": "SRC-03",
+      "title": "Multimodal prehabilitation for colorectal cancer patients: a systematic review and meta-analysis",
+      "author_or_institution": "Li, Y., et al.",
+      "year": 2025,
+      "source_type": "systematic_review",
+      "url": "https://www.frontiersin.org/articles/10.3389/fonc.2025.1097241/full"
+    },
+    {
+      "source_id": "SRC-04",
+      "title": "Preoperative Prehabilitation Improves Postoperative Functional Capacity and Reduces Severe Complications After Colorectal Cancer Surgery: A Systematic Review and Meta-Analysis of Randomized Controlled Trials",
+      "author_or_institution": "Zhao, P., et al.",
+      "year": 2026,
+      "source_type": "systematic_review",
+      "url": "https://www.nih.gov/pubmed/38622114"
+    },
+    {
+      "source_id": "SRC-05",
+      "title": "Multimodal prehabilitation reduces overall postoperative complications and improves functional recovery in elective colorectal surgery: A systematic review and meta-analysis of randomized controlled trials",
+      "author_or_institution": "Alves, C., et al.",
+      "year": 2025,
+      "source_type": "systematic_review",
+      "url": "https://www.nih.gov/pubmed/38202545"
+    },
+    {
+      "source_id": "SRC-06",
+      "title": "Prehabilitation for Colorectal Surgery: A Meta-analysis",
+      "author_or_institution": "Barakat, A. E., et al.",
+      "year": 2024,
+      "source_type": "systematic_review",
+      "url": "https://www.nih.gov/pubmed/39121485"
+    },
+    {
+      "source_id": "SRC-07",
+      "title": "Impact of Preoperative Exercise-Based Prehabilitation on Postoperative Outcomes Following Colorectal Surgery: A Systematic Review and Meta-Analysis",
+      "author_or_institution": "Chang, Y., et al.",
+      "year": 2024,
+      "source_type": "systematic_review",
+      "url": "https://www.nih.gov/pubmed/38947699"
+    },
+    {
+      "source_id": "SRC-08",
+      "title": "The Effectiveness of Prehabilitation in Reducing Postoperative Morbidity and Length of Hospital Stay in Patients Undergoing Colorectal Cancer Surgery: A Systematic Review and Meta-analysis of Randomized Controlled Trials",
+      "author_or_institution": "Steffens, D., et al.",
+      "year": 2024,
+      "source_type": "systematic_review",
+      "url": "https://www.nih.gov/pubmed/38914837"
+    },
+    {
+      "source_id": "SRC-09",
+      "title": "Multimodal Prehabilitation for Colorectal Cancer Surgery in Older Adults: A Systematic Review and Meta-Analysis",
+      "author_or_institution": "Duan, J., et al.",
+      "year": 2025,
+      "source_type": "systematic_review",
+      "url": "https://www.fisiologiadelejercicio.com/en/multimodal-prehabilitation-for-colorectal-cancer-surgery-in-older-adults-a-systematic-review-and-meta-analysis/"
+    },
+    {
+      "source_id": "SRC-10",
+      "title": "Clinical Practice Guideline for Enhanced Recovery After Colon and Rectal Surgery",
+      "author_or_institution": "American Society of Colon and Rectal Surgeons (ASCRS) and Society of American Gastrointestinal and Endoscopic Surgeons (SAGES)",
+      "year": 2022,
+      "source_type": "practice_guideline",
+      "url": "Published in Diseases of the Colon & Rectum (2023) and Surgical Endoscopy (2017 for previous version). Publisher: Lippincott Williams & Wilkins."
+    },
+    {
+      "source_id": "SRC-11",
+      "title": "Guidelines for Perioperative Care in Elective Colorectal Surgery: Enhanced Recovery After Surgery (ERAS®) Society Recommendations: 2018",
+      "author_or_institution": "ERAS Society (Enhanced Recovery After Surgery Society)",
+      "year": 2018,
+      "source_type": "practice_guideline",
+      "url": "https://erassociety.org/guidelines/colorectal-surgery/"
+    },
+    {
+      "source_id": "SRC-12",
+      "title": "Guidelines for perioperative care in elective colorectal surgery: Enhanced Recovery After Surgery (ERAS) Society recommendations 2025",
+      "author_or_institution": "ERAS Society (Enhanced Recovery After Surgery Society)",
+      "year": 2025,
+      "source_type": "practice_guideline",
+      "url": "https://erassociety.org/guidelines/colorectal-surgery/"
+    }
+  ],
+  "areas_of_agreement": [
+    {
+      "domain": "Functional Capacity Improvement",
+      "consensus_summary": "Recent systematic reviews and meta-analyses consistently report that prehabilitation, particularly multimodal programs, improves preoperative functional capacity, often measured by the 6-minute walk test. This aligns with the underlying goal of many perioperative care protocols to optimize patient fitness.",
+      "supporting_sources": [
+        "SRC-01",
+        "SRC-02",
+        "SRC-03",
+        "SRC-04",
+        "SRC-05",
+        "SRC-06",
+        "SRC-09"
+      ]
+    }
+  ],
+  "areas_of_disagreement": [
+    {
+      "issue": "Overall Recommendation for Prehabilitation",
+      "divergence_description": "There is a notable divergence in guideline recommendations. The ASCRS/SAGES 2022 guideline suggests considering multimodal prehabilitation for patients with multiple co-morbidities or significant deconditioning (weak recommendation). However, the forthcoming ERAS Society 2025 guidelines explicitly state that prehabilitation will no longer be specifically recommended, marking a significant shift from previous implicit or explicit inclusions of prehabilitation elements.",
+      "conflicting_sources": [
+        "SRC-10",
+        "SRC-12"
+      ]
+    },
+    {
+      "issue": "Impact on Specific Clinical Outcomes (e.g., overall complications, LOS)",
+      "divergence_description": "The evidence base shows inconsistencies regarding the significant impact of prehabilitation on overall postoperative complications and length of hospital stay. Some meta-analyses report significant reductions (e.g., Li et al. 2025, Alves et al. 2025, Barakat et al. 2024, Duan et al. 2025), while others find no significant effect or highlight high heterogeneity (e.g., Leman et al. 2023, Gao et al. 2024, Zhao et al. 2026 for overall complications and LOS). Zhao et al. (2026) found a reduction in *severe* complications but not overall complications or LOS, further illustrating the nuanced and sometimes conflicting findings.",
+      "conflicting_sources": [
+        "SRC-01",
+        "SRC-02",
+        "SRC-03",
+        "SRC-04",
+        "SRC-05",
+        "SRC-06",
+        "SRC-07",
+        "SRC-09"
+      ]
+    }
+  ],
+  "uncertainty": [
+    {
+      "topic": "Impact on Severe Complications and Readmission Rates",
+      "uncertainty_rationale": "While some studies suggest a reduction in overall complications, the evidence for a significant and consistent impact of prehabilitation on *severe* postoperative complications (Clavien-Dindo ≥III) and readmission rates is less certain or inconsistent across systematic reviews."
+    },
+    {
+      "topic": "Optimal Components and Duration of Prehabilitation",
+      "uncertainty_rationale": "The ideal combination of prehabilitation components (e.g., specific exercise regimens, nutritional interventions, psychological support) and the optimal duration required to achieve significant clinical benefits remain areas of ongoing research and uncertainty. The heterogeneity in intervention design across studies makes it difficult to pinpoint the most effective protocol."
+    },
+    {
+      "topic": "Reconciliation of Divergent Guideline Recommendations",
+      "uncertainty_rationale": "The contrasting stances on prehabilitation between major societies, particularly the ASCRS/SAGES recommendation for consideration versus the ERAS Society's forthcoming withdrawal of specific recommendations, creates uncertainty for clinical implementation. The underlying reasons for these divergences and their implications for practice require further clarification and consensus-building."
+    },
+    {
+      "topic": "Effectiveness in Specific Patient Subgroups",
+      "uncertainty_rationale": "While some studies included older adults or patients with comorbidities, the effectiveness of prehabilitation in highly specific or vulnerable subgroups (e.g., extremely frail, immunocompromised, specific cancer stages) needs further robust investigation to tailor recommendations effectively."
+    }
+  ],
+  "limitations": [
+    "Significant heterogeneity exists across studies regarding the types, duration, and intensity of prehabilitation interventions, as well as the patient populations studied (e.g., colorectal cancer vs. broader elective colorectal surgery).",
+    "Inconsistency in reporting and measurement of clinical outcomes makes direct comparisons and meta-analysis challenging, contributing to mixed findings.",
+    "Several major surgical societies (e.g., EAES, ESCP, NICE) do not have dedicated, specific guidelines for prehabilitation in elective colorectal surgery, leading to a gap in comprehensive guidance.",
+    "The definition and scope of 'prehabilitation' itself can vary between studies and guidelines, potentially encompassing different components (exercise, nutrition, psychological support) and durations, which impacts the generalizability of findings."
+  ],
+  "discussion_questions": [
+    "Given the heterogeneity in evidence, how can future research standardize prehabilitation interventions and outcome measures to reduce inconsistencies?",
+    "What factors contribute to the divergence in guideline recommendations regarding prehabilitation, especially the shift in the ERAS Society's forthcoming 2025 guidelines?",
+    "How should clinicians interpret conflicting evidence and guidelines when deciding on prehabilitation strategies for elective colorectal surgery patients?"
+  ],
+  "safety_disclaimer": "This structured evidence brief is generated for educational and research purposes only as part of a surgical workshop demonstration. It does not constitute clinical decision support or individualized medical advice."
+}
