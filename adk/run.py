@@ -122,7 +122,9 @@ def normalize_brief_structure(
                 if isinstance(st, dict):
                     study_item: Dict[str, Any] = {
                         "study_title": str(st.get("study_title", "Clinical Study")),
-                        "authors_or_organization": str(st.get("authors_or_organization", "Investigators")),
+                        "authors_or_organization": str(
+                            st.get("authors_or_organization", "Investigators")
+                        ),
                         "publication_year": int(st.get("publication_year", 2024)),
                         "evidence_type": str(st.get("evidence_type", "randomized_trial")),
                         "key_findings": str(st.get("key_findings", "Findings reported.")),
@@ -149,12 +151,18 @@ def normalize_brief_structure(
                     stmt_item: Dict[str, Any] = {
                         "organization": str(stmt.get("organization", "Surgical Society")),
                         "guideline_title": str(stmt.get("guideline_title", "Clinical Guideline")),
-                        "publication_or_update_year": int(stmt.get("publication_or_update_year", 2023)),
-                        "recommendation_summary": str(stmt.get("recommendation_summary", "Recommendation provided.")),
+                        "publication_or_update_year": int(
+                            stmt.get("publication_or_update_year", 2023)
+                        ),
+                        "recommendation_summary": str(
+                            stmt.get("recommendation_summary", "Recommendation provided.")
+                        ),
                         "url": str(stmt.get("url", "https://guidelines.org/")),
                     }
                     if "strength_of_recommendation" in stmt:
-                        stmt_item["strength_of_recommendation"] = str(stmt["strength_of_recommendation"])
+                        stmt_item["strength_of_recommendation"] = str(
+                            stmt["strength_of_recommendation"]
+                        )
                     norm_statements.append(stmt_item)
         data["guideline_findings"] = {
             "summary": str(gf.get("summary", "Guideline synthesis")),
@@ -189,14 +197,16 @@ def normalize_brief_structure(
                         st_type = "consensus_statement"
                     else:
                         st_type = "other"
-                norm_sources.append({
-                    "source_id": str(src.get("source_id", f"SRC-{idx+1:02d}")),
-                    "title": str(src.get("title", "Clinical Source")),
-                    "author_or_institution": str(src.get("author_or_institution", "Authors")),
-                    "year": int(src.get("year", 2024)),
-                    "source_type": st_type,
-                    "url": str(src.get("url", "https://pubmed.ncbi.nlm.nih.gov/")),
-                })
+                norm_sources.append(
+                    {
+                        "source_id": str(src.get("source_id", f"SRC-{idx + 1:02d}")),
+                        "title": str(src.get("title", "Clinical Source")),
+                        "author_or_institution": str(src.get("author_or_institution", "Authors")),
+                        "year": int(src.get("year", 2024)),
+                        "source_type": st_type,
+                        "url": str(src.get("url", "https://pubmed.ncbi.nlm.nih.gov/")),
+                    }
+                )
     data["sources"] = norm_sources
 
     # 8. Normalize areas_of_agreement
@@ -213,10 +223,12 @@ def normalize_brief_structure(
                     ag_item["supporting_sources"] = [str(s) for s in item["supporting_sources"]]
                 norm_agreement.append(ag_item)
             elif isinstance(item, str) and item.strip():
-                norm_agreement.append({
-                    "domain": "Surgical Consensus",
-                    "consensus_summary": item.strip(),
-                })
+                norm_agreement.append(
+                    {
+                        "domain": "Surgical Consensus",
+                        "consensus_summary": item.strip(),
+                    }
+                )
     data["areas_of_agreement"] = norm_agreement
 
     # 9. Normalize areas_of_disagreement
@@ -227,16 +239,20 @@ def normalize_brief_structure(
             if isinstance(item, dict):
                 dis_item: Dict[str, Any] = {
                     "issue": str(item.get("issue", "Clinical Disagreement")),
-                    "divergence_description": str(item.get("divergence_description", "Divergence noted.")),
+                    "divergence_description": str(
+                        item.get("divergence_description", "Divergence noted.")
+                    ),
                 }
                 if "conflicting_sources" in item and isinstance(item["conflicting_sources"], list):
                     dis_item["conflicting_sources"] = [str(s) for s in item["conflicting_sources"]]
                 norm_disagreement.append(dis_item)
             elif isinstance(item, str) and item.strip():
-                norm_disagreement.append({
-                    "issue": "Clinical Divergence",
-                    "divergence_description": item.strip(),
-                })
+                norm_disagreement.append(
+                    {
+                        "issue": "Clinical Divergence",
+                        "divergence_description": item.strip(),
+                    }
+                )
     data["areas_of_disagreement"] = norm_disagreement
 
     # 10. Normalize uncertainty
@@ -245,15 +261,21 @@ def normalize_brief_structure(
     if isinstance(raw_unc, list):
         for item in raw_unc:
             if isinstance(item, dict):
-                norm_unc.append({
-                    "topic": str(item.get("topic", "Evidence Boundary")),
-                    "uncertainty_rationale": str(item.get("uncertainty_rationale", "Uncertainty noted.")),
-                })
+                norm_unc.append(
+                    {
+                        "topic": str(item.get("topic", "Evidence Boundary")),
+                        "uncertainty_rationale": str(
+                            item.get("uncertainty_rationale", "Uncertainty noted.")
+                        ),
+                    }
+                )
             elif isinstance(item, str) and item.strip():
-                norm_unc.append({
-                    "topic": "Evidence Boundary",
-                    "uncertainty_rationale": item.strip(),
-                })
+                norm_unc.append(
+                    {
+                        "topic": "Evidence Boundary",
+                        "uncertainty_rationale": item.strip(),
+                    }
+                )
     data["uncertainty"] = norm_unc
 
     # 11. Normalize limitations and discussion_questions
@@ -411,7 +433,9 @@ async def execute_inquiry(
 
     if mock_mode:
         if verbose:
-            print("[Surgical AI POC] Executing in ZERO-TOKEN OFFLINE MODE (No network / API calls)...")
+            print(
+                "[Surgical AI POC] Executing in ZERO-TOKEN OFFLINE MODE (No network / API calls)..."
+            )
         return execute_inquiry_offline(question, verbose=verbose, telemetry=telemetry)
 
     from adk.config import DEFAULT_MODEL
@@ -489,7 +513,9 @@ async def execute_inquiry(
         telemetry["errors"].append(err_msg)
         if verbose:
             print(f"[TIMEOUT] {err_msg}")
-            print("[INFO] Falling back to zero-token offline simulation (conference resilience mode)...")
+            print(
+                "[INFO] Falling back to zero-token offline simulation (conference resilience mode)..."
+            )
         return execute_inquiry_offline(question, verbose=verbose, telemetry=telemetry)
 
     except Exception as exc:
@@ -497,7 +523,9 @@ async def execute_inquiry(
         telemetry["errors"].append(err_msg)
         if verbose:
             print(f"[WARN] Live orchestration unavailable: {exc}")
-            print("[INFO] Falling back to zero-token offline simulation (conference resilience mode)...")
+            print(
+                "[INFO] Falling back to zero-token offline simulation (conference resilience mode)..."
+            )
         return execute_inquiry_offline(question, verbose=verbose, telemetry=telemetry)
 
     elapsed = time.time() - start_time

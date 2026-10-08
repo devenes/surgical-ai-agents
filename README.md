@@ -8,6 +8,8 @@
 [![Status: Workshop Prototype](https://img.shields.io/badge/Status-Workshop_Prototype-orange.svg)](#current-status)
 [![Framework: Google ADK](https://img.shields.io/badge/Framework-Google_ADK_2.11-blue.svg)](https://github.com/google/adk)
 
+**[English](README.md) | [Türkçe](README-TR.md)**
+
 **Surgical AI Agents** is an educational proof-of-concept (POC) and reference implementation demonstrating how agentic AI architectures can turn unstructured clinical research dilemmas into structured, evidence-grounded research briefs. Designed for academic surgeons, surgical residents, clinical fellows, and health informatics researchers, this repository illustrates multi-agent decomposition, tool-based web grounding, and schema-constrained generation while strictly separating academic research from patient-specific clinical decision support.
 
 ---
@@ -29,21 +31,28 @@ This project demonstrates the **agentic solution**:
 
 ---
 
-## 🎓 Workshop Context
+## 🎓 Workshop Context & Interactive Tutorial Steps
 
-This repository serves as the hands-on technical material for a **60-minute interactive workshop**:
+This repository serves as the official hands-on technical curriculum for a **60-minute interactive workshop**:
 - **Title**: *Multi-Agent AI Architectures in Surgical Research: From Clinical Inquiries to Structured Evidence*
 - **Central Concept**: *"Use agentic AI to turn a surgical problem into an AI workflow/project."*
 - **Target Audience**: Academic surgeons, surgical trainees, and health informatics researchers.
-- **Pedagogical Flow**:
-  - `00–10m`: The Problem with Monolithic Chatbots in Surgery (hallucinations, conflation).
-  - `10–20m`: Multi-Agent Architecture & PICOT Normalization.
-  - `20–25m`: Inspecting Traces: Tool Calls, Grounding, and Schema Constraints.
-  - `25–30m`: Supplemental Vision-Language Mini-Demo (Anatomical observation, non-diagnostic).
-  - `30–50m`: Hands-on Exercise (Participants turn their clinical dilemma into an agent workflow).
-  - `50–60m`: Group Appraisal, Epistemic Humility & Clinical Boundaries.
+- **Hands-On Surfaces**: [Interactive Web UI](app/README.md) (FastAPI + Streamlit), Google Cloud Agent Studio Canvas, and [Python ADK CLI](adk/README.md).
 
-*See [`workshop/`](workshop/) for runbooks, participant guides, and presentation materials.*
+### ⏱️ Session Tutorial Steps Roadmap
+
+Follow this step-by-step tutorial sequence during the 60-minute workshop:
+
+| Step / Segment | Time | Pedagogical Objective | Hands-On Actions & Commands | Primary Sub-Document Links (EN / TR) | Key Deliverable |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| **Step 0** | **T-30m** | **Podium Verification & Setup** | Run automated zero-token rehearsal command or launch local Web Studio | • [Presenter Rehearsal Protocol](workshop/presenter-runbook.md#🛡️-t-30-minute-pre-workshop-rehearsal-protocol-podium-verification) ([TR](workshop/presenter-runbook-TR.md#🛡️-t-30-dakika-çalıştay-öncesi-prova-protokolü-kürsü-doğrulaması---podium-verification))<br>• [Local Web UI Guide](docs/local-ui-setup.md) ([TR](docs/local-ui-setup-TR.md))<br>• [Google Cloud & ADC Setup](docs/google-cloud-setup.md) ([TR](docs/google-cloud-setup-TR.md))<br>• [Windows Setup Guide](docs/windows-setup-guide.md) ([TR](docs/windows-setup-guide-TR.md)) | Verified local runtime with 16 cached cases (`http://127.0.0.1:8501`) |
+| **Step 1** | **00–07m** (7m) | **The Surgeon's Dilemma with GenAI** | Contrast single-turn chatbot flaws (hallucinations, lack of evidence hierarchy) with multi-agent orchestration | • [Workshop Storyboard & Cognitive Journey](workshop/storyboard.md) ([TR](workshop/storyboard-TR.md))<br>• [Clinical Safety & Non-CDSS Policy](docs/safety.md) ([TR](docs/safety-TR.md))<br>• [System Architecture & Design](docs/architecture.md) ([TR](docs/architecture-TR.md))<br>• [Presenter Talking Points](workshop/presenter-runbook.md#segment-1-introduction--the-agentic-shift-0000--0700) ([TR](workshop/presenter-runbook-TR.md#bölüm-1-giriş-ve-agentic-değişim-0000--0700)) | Understanding PICOT decomposition and clinical guardrails |
+| **Step 2** | **07–20m** (13m) | **Live Multi-Agent Demonstration** | Submit primary colorectal prehab prompt; observe Coordinator decomposing PICOT and delegating to Evidence & Guideline specialists | • [Live Demo Script](workshop/presenter-runbook.md#segment-2-live-multi-agent-demo-0700--2000) ([TR](workshop/presenter-runbook-TR.md#bölüm-2-canlı-multi-agent-demosu-0700--2000))<br>• [Primary Colorectal Prehab Case](examples/research-questions/colorectal-prehabilitation.md)<br>• [Primary Demo Prompt](workshop/demo-prompts.md#1-primary-demo-multimodal-colorectal-prehabilitation) ([TR](workshop/demo-prompts-TR.md#1-birincil-demo-multimodal-kolorektal-prehabilitasyon-primary-demo))<br>• [Agent Studio Wiring Checklist](agents/agent-studio/setup-checklist.md)<br>• [Terminal ADK CLI Runner](adk/run.py) | First grounded evidence brief generated with verified citations |
+| **Step 3** | **20–25m** (5m) | **Trace Inspection & Grounding Audit** | Inspect execution trace drawer; audit Google Search queries, verified source URLs, and Draft-07 JSON schema contracts | • [Trace Walkthrough Guide](workshop/presenter-runbook.md#segment-3-architectural-deconstruction--trace-inspection-2000--2500) ([TR](workshop/presenter-runbook-TR.md#bölüm-3-mimari-analiz-ve-trace-incelemesi-2000--2500))<br>• [Coordinator Output Contract](agents/coordinator/output-schema.json)<br>• [Gemini 3.8 Flash Grounding Specs](docs/model-baseline.md) ([TR](docs/model-baseline-TR.md))<br>• [Classroom Troubleshooting Guide](workshop/troubleshooting.md) ([TR](workshop/troubleshooting-TR.md)) | Inspection of tool calls and schema validation mechanisms |
+| **Step 4** | **25–30m** (5m) | **Supplemental Operative Vision Demo** | Observe Strasberg Critical View of Safety (CVS) schematic; two-stage prompt for non-diagnostic anatomical observation | • [Multimodal Demo Overview](multimodal-demo/README.md) ([TR](multimodal-demo/README-TR.md))<br>• [Two-Stage Vision Prompts](multimodal-demo/prompt.md) ([TR](multimodal-demo/prompt-TR.md))<br>• [Non-Diagnostic Safety Policy](multimodal-demo/safety.md) ([TR](multimodal-demo/safety-TR.md))<br>• [Vision Presenter Script](multimodal-demo/presenter-script.md) ([TR](multimodal-demo/presenter-script-TR.md))<br>• [Synthetic CVS Schematic Diagram](multimodal-demo/assets/laparoscopic_cvs_schematic.png) | Understanding surgical vision-language boundaries (Zero PHI) |
+| **Step 5** | **30–50m** (20m) | **Hands-On Participant Exercise** | Attendees deconstruct their own clinical dilemma using 4-step worksheet (Raw Question → PICOT → Specialist Tasks → Master Prompt) | • [Attendee Exercise Worksheet](workshop/participant-guide.md) ([TR](workshop/participant-guide-TR.md))<br>• [16 Curated Benchmark Prompts](workshop/demo-prompts.md) ([TR](workshop/demo-prompts-TR.md))<br>• [Interactive Web Dashboard](app/README.md)<br>• [4-Tier Offline Contingencies](workshop/fallback-demo.md) ([TR](workshop/fallback-demo-TR.md)) | Formulated surgical research AI project with PICOT framing |
+| **Step 6** | **50–57m** (7m) | **Group Appraisal & Epistemic Humility** | Stress-test edge cases: Missing trial evidence (`EDGE-01 HIFU`), conflicting guidelines (`EDGE-03 Bowel Prep`), and patient safety trap (`EDGE-07`) | • [16-Case Benchmark Dataset](evaluations/test-cases.yaml)<br>• [Evaluation Rubric & Criteria](evaluations/expected-behavior.md)<br>• [Clinical Traps & Boundary Cases](prompts/edge-cases.md)<br>• [Facilitator Appraisal Guide](workshop/presenter-runbook.md#segment-6-group-discussion--output-appraisal-5000--5700) ([TR](workshop/presenter-runbook-TR.md#bölüm-6-sonuçları-paylaşma-ve-çıktı-değerlendirmesi-5000--5700)) | Verification of `not_found: true` states and safety refusals |
+| **Step 7** | **57–60m** (3m) | **Wrap-Up, Code Mirror & Next Steps** | Export Agent Studio to Python ADK code; review PRISMA systematic review pipeline, institutional RAG roadmap, and Cloud Run hosting | • [ADK Setup & Code Mirror Guide](docs/adk-setup.md) ([TR](docs/adk-setup-TR.md))<br>• [Architecture & Evolution Roadmap](docs/architecture.md) ([TR](docs/architecture-TR.md))<br>• [Cloud Run Deployment Guide](workshop/cloud-deployment.md) ([TR](workshop/cloud-deployment-TR.md))<br>• [Workshop Package Catalog](workshop/README.md) ([TR](workshop/README-TR.md)) | Actionable pathway to turn prototype into publication or grant |
 
 ---
 
@@ -349,7 +358,7 @@ The repository contains offline unit tests and live integration tests:
 
 ### 1. Offline Unit Tests (Safe, No Tokens Consumed)
 ```bash
-# Runs full offline suite (31 unit tests across agents, schemas, API routes, and services)
+# Runs full offline suite (61 unit tests across agents, schemas, API routes, services, and rehearsal)
 uv run pytest
 
 # Run only Web UI unit tests
@@ -367,11 +376,13 @@ uv run pytest -m integration tests/test_integration_live.py
 ## 📚 Workshop Materials
 
 All workshop presentation, facilitation, and troubleshooting documents are organized in [`workshop/`](workshop/):
-- **[`presenter-runbook.md`](workshop/presenter-runbook.md)**: Minute-by-minute session flow, talking points, and click instructions.
-- **[`participant-guide.md`](workshop/participant-guide.md)**: Attendee worksheet for PICOT decomposition and safety boundaries.
-- **[`demo-prompts.md`](workshop/demo-prompts.md)**: 8 normal cases, 8 edge cases, and prompt transformation examples.
-- **[`troubleshooting.md`](workshop/troubleshooting.md)**: Rapid solutions for classroom connectivity, latency, or schema issues.
-- **[`fallback-demo.md`](workshop/fallback-demo.md)**: 4-tier contingencies (cached evidence briefs, terminal runner, single-agent fallback).
+- **[`presenter-runbook.md`](workshop/presenter-runbook.md)** ([TR](workshop/presenter-runbook-TR.md)): Minute-by-minute session flow, talking points, and click instructions (00–60m).
+- **[`participant-guide.md`](workshop/participant-guide.md)** ([TR](workshop/participant-guide-TR.md)): Attendee worksheet for PICOT decomposition and safety boundaries.
+- **[`demo-prompts.md`](workshop/demo-prompts.md)** ([TR](workshop/demo-prompts-TR.md)): 8 normal cases, 8 edge cases, and prompt transformation examples.
+- **[`troubleshooting.md`](workshop/troubleshooting.md)** ([TR](workshop/troubleshooting-TR.md)): Rapid solutions for classroom connectivity, latency, or schema issues.
+- **[`fallback-demo.md`](workshop/fallback-demo.md)** ([TR](workshop/fallback-demo-TR.md)): 4-tier contingencies (cached evidence briefs, terminal runner, single-agent fallback).
+- **[`cloud-deployment.md`](workshop/cloud-deployment.md)** ([TR](workshop/cloud-deployment-TR.md)): Cloud Run container deployment guide with least-privilege IAM configuration.
+- **[`storyboard.md`](workshop/storyboard.md)** ([TR](workshop/storyboard-TR.md)): Conceptual cognitive journey from clinical dilemma to structured AI agent.
 
 ---
 
@@ -382,7 +393,7 @@ All workshop presentation, facilitation, and troubleshooting documents are organ
 - **ADK Core**: Fully wired with single-turn subagent delegation and Pydantic schemas.
 - **Grounding**: Connected to Google Search Grounding via official ADK tools.
 - **Schemas**: Validated against JSON Schema Draft-07 contracts.
-- **Unit Testing**: 31 offline unit tests verified and passing (0 tokens consumed).
+- **Unit Testing**: 61 offline unit tests verified and passing (0 tokens consumed).
 - **Safety**: Automated safety refusal triggers on patient-specific inquiries.
 
 ---
@@ -400,7 +411,7 @@ All workshop presentation, facilitation, and troubleshooting documents are organ
 
 - [ ] **Phase 4A - Institutional RAG**: Integration with Vertex AI Search for private hospital clinical pathways and local antibiograms.
 - [x] **Phase 4B - Interactive Workshop UI**: Lightweight web runner (FastAPI + Streamlit) in [`app/`](app/).
-- [ ] **Phase 4C - Cloud Run Deployment**: Containerized deployment for workshop classroom environments.
+- [x] **Phase 4C - Cloud Run Deployment**: Containerized deployment guide and production Dockerfile in [`workshop/cloud-deployment.md`](workshop/cloud-deployment.md).
 
 ---
 

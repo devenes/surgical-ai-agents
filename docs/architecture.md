@@ -30,24 +30,30 @@ flowchart TD
 
 ## Product Boundaries & Operational Surfaces
 
-The system strictly differentiates three operational surfaces to prevent architectural conflation:
+The system strictly differentiates four operational surfaces to prevent architectural conflation:
 
-1. **PRIMARY WORKSHOP SYSTEM**:
+1. **INTERACTIVE WEB UI**:
+   - **Environment**: Local Web (`app/` FastAPI + Streamlit)
+   - **Modality**: Multimodal Vision & Multi-Agent Consensus Studio
+   - **Topology**: Full-featured interactive dashboard with tabs for Operative Vision Studio, 2-Subagent Consensus Studio, PICOT Query Decomposer, Specialist Deep-Dive, and Zero-Token Offline Simulation Mode.
+   - **Role**: Primary hands-on interactive interface for attendees and facilitators, supporting both live Vertex AI and 0-token offline simulation across all 16 benchmark clinical cases.
+
+2. **PRIMARY WORKSHOP SYSTEM (AGENT STUDIO)**:
    - **Environment**: Google Cloud Agent Studio (Agent Designer Canvas)
    - **Modality**: 100% Text-Based Multi-Agent Research Workflow
    - **Topology**: Root Coordinator + 2 Local Subagents (`evidence-specialist`, `guideline-specialist`)
-   - **Role**: Primary hands-on demonstration and interactive surface for the 60-minute workshop.
+   - **Role**: Visual workshop demonstration platform for interactive canvas inspection, subagent routing, and live preview traces.
 
-2. **SUPPLEMENTAL DEMO**:
-   - **Environment**: Agent Studio Chat / Freeform (or Vertex AI Studio Multimodal Interface)
+3. **SUPPLEMENTAL VISION MINI-DEMO**:
+   - **Environment**: Standalone Script (`multimodal-demo/`) or Agent Studio Chat / Freeform
    - **Modality**: Multimodal Vision-Language Understanding (`gemini-3.8-flash`)
-   - **Role**: Supplemental 5-minute showcase illustrating operative image observation and surgical computer vision research tasks.
-   - **Boundary**: Kept strictly separated from the Agent Designer canvas; no image-input subagents attached to Coordinator.
+   - **Role**: Supplemental 5-minute showcase illustrating operative anatomical landmark observation (Critical View of Safety) and computer vision research tasks.
+   - **Boundary**: Kept strictly separated from the text-based research canvas; zero patient identification (100% synthetic vector schematics).
 
-3. **DEVELOPER REFERENCE**:
+4. **DEVELOPER REFERENCE IMPLEMENTATION**:
    - **Environment**: Google Agent Development Kit (ADK `2.11.0` / `google-genai 2.28.0` on `gemini-3.8-flash`)
    - **Modality**: Code-based Python implementation with strict Pydantic / Draft-07 JSON Schema validation
-   - **Role**: Programmatic baseline for offline unit testing, 6-dimension evaluation suites, CI/CD regression tests, and developer customization.
+   - **Role**: Programmatic baseline for offline unit testing, 6-dimension evaluation suites, CI/CD regression tests, terminal runners (`adk.run`), and developer customization.
 
 ---
 
@@ -100,9 +106,9 @@ The institutional policy and practice parameters specialist. It:
 ```mermaid
 flowchart LR
     P1["PHASE 1 (Completed)<br/>Repository & Scaffolding<br/>• Prompts & Schemas<br/>• Test Cases & Docs"]
-    P2["PHASE 2 (Completed)<br/>Live ADK Multi-Agent POC<br/>• Coordinator + Evidence + Guideline<br/>• Google Search Grounding & ADC<br/>• Structured Output Briefs"]
-    P3["PHASE 3 (Completed)<br/>Evaluation & Hardening<br/>• sub_agents Delegation<br/>• Typed Contracts<br/>• Native ADK Evaluation"]
-    P4["PHASE 4 (Future Roadmap)<br/>Enterprise RAG & UI<br/>• Hospital Guidelines / RAG<br/>• Workshop Dashboard UI<br/>• Cloud Run Deployment"]
+    P2["PHASE 2 (Completed)<br/>Live ADK Multi-Agent POC<br/>• Coordinator + Specialists<br/>• Google Search Grounding<br/>• Structured Output Briefs"]
+    P3["PHASE 3 (Completed)<br/>Evaluation & Hardening<br/>• sub_agents Delegation<br/>• Typed Pydantic Contracts<br/>• 61 Offline Tests Passing"]
+    P4["PHASE 4 (Current / Active)<br/>Interactive UI & Deployment<br/>• Phase 4B: Web UI Completed<br/>• Phase 4C: Cloud Run Completed<br/>• Phase 4A: Institutional RAG"]
     
     P1 --> P2 --> P3 --> P4
 ```
@@ -125,7 +131,8 @@ flowchart LR
   - Hardened schema conformance, timeout protection, and zero-PHI safety boundaries.
 - **Status**: **VERIFIED & COMPLETED**.
 
-### PHASE 4: Enterprise Knowledge, UI & Deployment (Future Roadmap)
-- **Scope**: Hospital-specific protocol RAG (Vertex AI Search), interactive Streamlit/web dashboard in `app/`, and Cloud Run containerization.
-- **Status**: *Design phase only; implementation strictly deferred.*
+### PHASE 4: Interactive UI, Deployment & Institutional RAG (Active)
+- **Phase 4A: Institutional RAG (Future)**: Integration with Vertex AI Search for private hospital clinical pathways and local antibiograms (*Design phase*).
+- **Phase 4B: Interactive Workshop UI (Completed)**: Lightweight FastAPI + Streamlit web runner in [`app/`](../app/) with multimodal vision studio, 2-subagent consensus pipeline, and 0-token offline simulation (*Status: Verified & Operational, 61 passing tests*).
+- **Phase 4C: Cloud Deployment (Completed)**: Cloud Run containerization and Buildpacks/Dockerfile deployment guide in [`workshop/cloud-deployment.md`](../workshop/cloud-deployment.md) (*Status: Documented & Tested*).
 

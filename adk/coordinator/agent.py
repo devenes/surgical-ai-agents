@@ -55,6 +55,7 @@ def create_coordinator_agent(
         output_schema=StructuredEvidenceBriefModel,
     )
 
+
 def get_root_agent() -> Agent:
     """Return a Coordinator Agent instance."""
     return create_coordinator_agent()

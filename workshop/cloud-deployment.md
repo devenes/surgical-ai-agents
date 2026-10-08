@@ -23,9 +23,10 @@ Deploying directly from source is ideal for fast iterations and workshop demonst
 ### Step 1: Create Dedicated Service Account (Least Privilege)
 
 ```bash
-# Set your active project and region
+# Set your active project and regions
 export PROJECT_ID=$(gcloud config get-value project)
-export REGION="us-central1"
+export REGION="us-central1"      # Cloud Run compute region
+export VERTEX_LOCATION="us"     # Vertex AI multi-region for gemini-3.8-flash (us-central1 returns 404)
 
 # Create a dedicated, non-privileged service account
 gcloud iam service-accounts create surgical-agent-sa \
@@ -56,7 +57,7 @@ gcloud run deploy surgical-ai-studio \
   --command "/cnb/lifecycle/launcher" \
   --args "sh,-c,python3 -m streamlit run app/frontend/main.py --server.port=\$PORT --server.address=0.0.0.0 --server.enableCORS=false --server.enableXsrfProtection=false --server.headless=true" \
   --service-account "surgical-agent-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-  --set-env-vars GOOGLE_GENAI_USE_ENTERPRISE=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1
+  --set-env-vars GOOGLE_GENAI_USE_ENTERPRISE=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=$VERTEX_LOCATION
 ```
 
 > **Note**: If prompted to create an Artifact Registry Docker repository to store built containers (e.g., *Do you want to continue (Y/n)?*), enter `Y`. Buildpack compilation takes approximately 3–4 minutes.
@@ -101,7 +102,8 @@ docker stop surgical-ai-app && docker rm surgical-ai-app
 
 ```bash
 export PROJECT_ID=$(gcloud config get-value project)
-export REGION="us-central1"
+export REGION="us-central1"      # Cloud Run compute region
+export VERTEX_LOCATION="us"     # Vertex AI multi-region for gemini-3.8-flash (us-central1 returns 404)
 export REPO="surgical-ai-repo"
 
 # 1. Create Docker repository in Artifact Registry
@@ -126,7 +128,7 @@ gcloud run deploy surgical-ai-studio \
   --region $REGION \
   --allow-unauthenticated \
   --service-account "surgical-agent-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-  --set-env-vars GOOGLE_GENAI_USE_ENTERPRISE=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1
+  --set-env-vars GOOGLE_GENAI_USE_ENTERPRISE=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=$VERTEX_LOCATION
 ```
 
 ---

@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 import jsonschema
 import yaml
 
-from adk.run import execute_inquiry
+from adk.run import execute_inquiry, execute_inquiry_offline
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 YAML_PATH = REPO_ROOT / "evaluations" / "test-cases.yaml"
@@ -293,15 +293,22 @@ async def evaluate_single_run(
     run_idx: int,
     model_name: Optional[str] = None,
     schema: Optional[Dict[str, Any]] = None,
+    offline: bool = False,
 ) -> SingleRunResult:
     """Execute a single run for a test case and evaluate all 6 dimensions."""
     start_time = time.time()
     try:
-        result, telemetry = await execute_inquiry(
-            question=tc["input"],
-            model_name=model_name,
-            verbose=False,
-        )
+        if offline:
+            result, telemetry = execute_inquiry_offline(
+                question=tc["input"],
+                verbose=False,
+            )
+        else:
+            result, telemetry = await execute_inquiry(
+                question=tc["input"],
+                model_name=model_name,
+                verbose=False,
+            )
         elapsed = round(time.time() - start_time, 2)
 
         # Check for errors in telemetry
@@ -385,11 +392,13 @@ async def run_evaluation_suite(
     cases_filter: Optional[str] = None,
     num_runs: int = 2,
     model_name: Optional[str] = None,
+    offline: bool = False,
 ) -> Dict[str, Any]:
     """Execute full evaluation across selected test cases and runs."""
     test_cases = load_test_cases(cases_filter)
+    offline_msg = " [ZERO-TOKEN OFFLINE SIMULATION]" if offline else ""
     print(
-        f"\n[Surgical AI Evaluation] Starting evaluation suite on {len(test_cases)} case(s) ({num_runs} run(s) per case)..."
+        f"\n[Surgical AI Evaluation] Starting evaluation suite on {len(test_cases)} case(s) ({num_runs} run(s) per case){offline_msg}..."
     )
     if len(test_cases) > 1 or num_runs > 1:
         est_minutes = round((len(test_cases) * num_runs * 60) / 60, 1)
@@ -439,6 +448,7 @@ async def run_evaluation_suite(
                 run_idx=run_idx,
                 model_name=model_name,
                 schema=schema,
+                offline=offline,
             )
             summary.runs.append(run_result)
 
@@ -625,6 +635,11 @@ def main() -> None:
         default=None,
         help="Gemini model to evaluate (default: gemini-3.8-flash)",
     )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Run evaluation suite locally in zero-token offline mode without network calls.",
+    )
 
     args = parser.parse_args()
 
@@ -633,6 +648,7 @@ def main() -> None:
             cases_filter=args.cases,
             num_runs=args.runs,
             model_name=args.model,
+            offline=args.offline,
         )
     )
 

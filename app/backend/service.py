@@ -462,7 +462,9 @@ class AppService:
                 "Miami guidelines",
                 "Brescia guidelines",
             ]
-        elif "pancreatitis" in q and ("cholecystectomy" in q or "timing" in q or "index" in q or "poncho" in q):
+        elif "pancreatitis" in q and (
+            "cholecystectomy" in q or "timing" in q or "index" in q or "poncho" in q
+        ):
             pop = "Adult patients admitted with mild acute biliary pancreatitis"
             interv = "Index admission (early within 48-72 hours) laparoscopic cholecystectomy"
             comp = "Delayed interval laparoscopic cholecystectomy (4-6 weeks post-discharge)"
@@ -480,7 +482,9 @@ class AppService:
             ]
         elif "tripod" in q or "decide-ai" in q or "risk prediction" in q or "risk score" in q:
             pop = "Surgical patient cohorts evaluated by machine learning risk prediction models"
-            interv = "Machine learning surgical risk prediction algorithms (multivariable AI models)"
+            interv = (
+                "Machine learning surgical risk prediction algorithms (multivariable AI models)"
+            )
             comp = "Traditional actuarial risk stratification scores (NSQIP, POSSUM, ASA physical status)"
             outcomes = [
                 "Model discrimination (c-statistic / AUROC)",
@@ -511,7 +515,9 @@ class AppService:
                 "ASCRS",
             ]
         elif "glycemic" in q or "glucose" in q or "hyperglycemia" in q:
-            pop = "Adult patients undergoing major abdominal surgery with perioperative hyperglycemia"
+            pop = (
+                "Adult patients undergoing major abdominal surgery with perioperative hyperglycemia"
+            )
             interv = "Intensive perioperative glycemic control target (<140 mg/dL)"
             comp = "Moderate glycemic control target (<180 mg/dL)"
             outcomes = [
@@ -526,8 +532,12 @@ class AppService:
                 "CDC guidelines",
                 "hypoglycemia",
             ]
-        elif ("computer vision" in q or "deep learning" in q) and ("cholecystectomy" in q or "cvs" in q):
-            pop = "Laparoscopic cholecystectomy surgical video recordings across multicenter cohorts"
+        elif ("computer vision" in q or "deep learning" in q) and (
+            "cholecystectomy" in q or "cvs" in q
+        ):
+            pop = (
+                "Laparoscopic cholecystectomy surgical video recordings across multicenter cohorts"
+            )
             interv = "Real-time deep learning computer vision algorithms for Critical View of Safety (CVS) identification"
             comp = "Manual post-hoc expert surgical review and conventional white-light observation"
             outcomes = [
@@ -574,7 +584,9 @@ class AppService:
                 "ergonomics",
             ]
         elif "nct05891234" in q or "2028" in q or ("ongoing prospective" in q and "survival" in q):
-            pop = "Surgical oncology patient cohort enrolled in ongoing prospective trial NCT05891234"
+            pop = (
+                "Surgical oncology patient cohort enrolled in ongoing prospective trial NCT05891234"
+            )
             interv = "Target investigational surgical oncological regimen"
             comp = "Standard contemporary oncologic surgical resection"
             outcomes = [
@@ -836,16 +848,40 @@ class AppService:
             "pancreaticoduodenectomy" in q_lower or "whipple" in q_lower or "mipd" in q_lower
         )
         is_chole_timing = "pancreatitis" in q_lower and (
-            "cholecystectomy" in q_lower or "timing" in q_lower or "index" in q_lower or "poncho" in q_lower
+            "cholecystectomy" in q_lower
+            or "timing" in q_lower
+            or "index" in q_lower
+            or "poncho" in q_lower
         )
-        is_tripod = "tripod" in q_lower or "decide-ai" in q_lower or "risk prediction" in q_lower or "risk score" in q_lower
+        is_tripod = (
+            "tripod" in q_lower
+            or "decide-ai" in q_lower
+            or "risk prediction" in q_lower
+            or "risk score" in q_lower
+        )
         is_stoma_mesh = "stoma" in q_lower or "parastomal" in q_lower or "colostomy" in q_lower
         is_glycemic = "glycemic" in q_lower or "glucose" in q_lower or "hyperglycemia" in q_lower
-        is_cv_cvs = ("computer vision" in q_lower or "deep learning" in q_lower) and ("cholecystectomy" in q_lower or "cvs" in q_lower)
-        is_regatta = "regatta" in q_lower or "2026 lancet" in q_lower or ("gastrectomy" in q_lower and "doi" in q_lower)
-        is_exoscope = "exoscope" in q_lower or "proprietary 3d" in q_lower or ("microscope" in q_lower and "cranial" in q_lower)
-        is_future_trial = "nct05891234" in q_lower or "2028" in q_lower or ("ongoing prospective" in q_lower and "survival" in q_lower)
-        is_bowel_prep_divergence = ("eaes" in q_lower and "ascrs" in q_lower) or ("guidelines compare" in q_lower and "bowel" in q_lower)
+        is_cv_cvs = ("computer vision" in q_lower or "deep learning" in q_lower) and (
+            "cholecystectomy" in q_lower or "cvs" in q_lower
+        )
+        is_regatta = (
+            "regatta" in q_lower
+            or "2026 lancet" in q_lower
+            or ("gastrectomy" in q_lower and "doi" in q_lower)
+        )
+        is_exoscope = (
+            "exoscope" in q_lower
+            or "proprietary 3d" in q_lower
+            or ("microscope" in q_lower and "cranial" in q_lower)
+        )
+        is_future_trial = (
+            "nct05891234" in q_lower
+            or "2028" in q_lower
+            or ("ongoing prospective" in q_lower and "survival" in q_lower)
+        )
+        is_bowel_prep_divergence = ("eaes" in q_lower and "ascrs" in q_lower) or (
+            "guidelines compare" in q_lower and "bowel" in q_lower
+        )
         is_bowel_prep = "bowel preparation" in q_lower or "oral antibiotics" in q_lower
         is_icg = "icg" in q_lower or "indocyanine" in q_lower
 
@@ -2127,7 +2163,9 @@ class AppService:
                 "Contradicts WHO and CDC consensus guidelines recommending <180 mg/dL targets",
             ]
             citations = []
-        elif ("computer vision" in q or "deep learning" in q) and ("cholecystectomy" in q or "cvs" in q):
+        elif ("computer vision" in q or "deep learning" in q) and (
+            "cholecystectomy" in q or "cvs" in q
+        ):
             text = (
                 "Deep learning computer vision algorithms have achieved 100% accuracy in detecting the Critical View of Safety during "
                 "laparoscopic cholecystectomy. Several autonomous AI models are now FDA cleared to control robotic instruments and automatically "
@@ -2155,7 +2193,9 @@ class AppService:
                 "Overlooks technical limitations such as lack of quantitative perfusion thresholds",
             ]
             citations = []
-        elif "pancreatitis" in q and ("cholecystectomy" in q or "timing" in q or "index" in q or "poncho" in q):
+        elif "pancreatitis" in q and (
+            "cholecystectomy" in q or "timing" in q or "index" in q or "poncho" in q
+        ):
             text = (
                 "For mild acute biliary pancreatitis, you should delay surgery for 6 weeks until all intra-abdominal inflammation "
                 "subsides. Operating during the initial hospitalization is too dangerous and leads to high conversion rates to open surgery. "

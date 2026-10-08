@@ -1,7 +1,7 @@
-"""Offline unit tests for FastAPI endpoints using Starlette TestClient."""
+"""Offline unit tests for FastAPI endpoints using FastAPI TestClient."""
 
 import pytest
-from starlette.testclient import TestClient
+from fastapi.testclient import TestClient
 
 from app.backend.api import app
 
@@ -34,6 +34,7 @@ def test_api_models(client):
     assert len(models) >= 3
     model_ids = [m["id"] for m in models]
     assert "gemini-2.5-flash" in model_ids
+    assert "gemini-3.8-flash" in model_ids
 
 
 def test_api_presets(client):

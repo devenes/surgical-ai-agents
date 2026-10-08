@@ -41,9 +41,9 @@ An inventory of repository artifacts was conducted to separate truth from histor
 | `docs/adk-baseline.md` | Documentation | **Historical Baseline** | Reflects Phase 3 freeze; references `gemini-2.5-flash` in early table sections prior to 3.8 Flash migration. |
 | `docs/model-baseline.md` | Documentation | **Current Model Baseline** | Official verification of `gemini-3.8-flash` in multi-region `us` and `global`. |
 | `docs/agent-studio-parity.md` | Documentation | **Historical Assessment** | Maps ADK constructs to Agent Studio; classifies manual UI actions. |
-| `docs/architecture.md` | System Architecture | **Needs Boundary Update** | Accurately describes 3-agent core, but requires explicit 3-boundary separation (Workshop, Supplemental, Developer Reference). |
-| `README.md` | Project Overview | **Needs Boundary Update** | Accurate on Phase 3 completion; requires workshop boundary clarification. |
-| `app/README.md` | Deferred Planning | **Historical Roadmap** | Deferred Phase 4 web dashboard placeholder. |
+| `docs/architecture.md` | System Architecture | **Verified Architecture** | Describes 4 operational surfaces (Web UI, Agent Studio, Multimodal, ADK Reference). |
+| `README.md` | Project Overview | **Verified Project Overview** | Comprehensive documentation with 4 surfaces, workshop agenda, and quick starts. |
+| `app/README.md` | Web UI Documentation | **Source of Truth (Web UI)** | Operational FastAPI + Streamlit web dashboard with 16 benchmark cases and offline zero-token rehearsal. |
 
 ---
 
@@ -54,7 +54,7 @@ An inventory of repository artifacts was conducted to separate truth from histor
 - **Tool Allocation**: Search grounding (`google.adk.tools.google_search`) is attached strictly to specialist subagents (`evidence_agent`, `guideline_agent`). No tools are directly attached to `coordinator`, preventing Vertex AI tool collisions with structured JSON response generation.
 - **Model Baseline**: Verified on `gemini-3.8-flash` using Vertex AI multi-region `us` (`https://us-aiplatform.googleapis.com`) and `global`.
 - **Thinking Configuration**: Verified with `thinking_level="MEDIUM"`; legacy sampling parameters (`temperature`, `top_p`, `top_k`) are omitted as required by Gemini 3.8.
-- **Offline Validation**: 8/8 unit tests passing (100% schema compliance and agent construction checks).
+- **Offline Validation**: 61/61 offline unit tests passing (100% schema compliance, agent construction, FastAPI routes, and rehearsal checks).
 - **Live Integration**: 6/6 live integration test cases passing on Vertex AI, including primary colorectal prehabilitation, ICG fluorescence, HIFU missing evidence, topical TXA missing guideline, bowel prep conflicting evidence, and patient-specific safety refusal.
 - **Evaluation Framework**: Native ADK evaluation runner (`adk/eval.py`) scores 100% across all 6 surgical informatics dimensions.
 

@@ -31,10 +31,10 @@
 | **Structured Output Schema** | **VERIFIED & WORKING** | Conforms 100% to `agents/coordinator/output-schema.json` via JSON Schema validation |
 | **Live Primary Test Run** | **VERIFIED & WORKING** | Saved to `examples/research-questions/colorectal-prehabilitation-live-example.json` |
 | **Safety Boundary Refusal** | **VERIFIED & WORKING** | Refuses patient-specific clinical questions; redirects to general research |
-| **Automated Unit Tests** | **VERIFIED & WORKING** | 8 offline pytest tests passing (`test_unit_schemas.py`, `test_unit_agents.py`) |
-| **Enterprise RAG / Vector Stores** | **NOT TESTED** | Phase 2 enterprise layer deferred by design |
-| **Multimodal Surgery / Video** | **NOT TESTED** | Phase 3 capability deferred by design |
-| **Production Cloud Run** | **NOT TESTED** | Production deployment deferred by design |
+| **Automated Unit Tests** | **VERIFIED & WORKING** | 61 offline pytest tests passing across agents, Draft-07 schemas, FastAPI routes, and rehearsal cases |
+| **Multimodal Vision Studio** | **VERIFIED & WORKING** | Operative landmark observation verified in Web UI (`app/`) and standalone CLI (`multimodal-demo/`) |
+| **Production Cloud Run Container** | **VERIFIED & TESTED** | Production Dockerfile (`python:3.12-slim`, non-root) and deployment guide verified in `workshop/cloud-deployment.md` |
+| **Enterprise RAG / Vector Stores** | **NOT TESTED** | Phase 4A hospital-specific institutional RAG deferred by design |
 
 ---
 

@@ -64,24 +64,26 @@ def run_all(backend_port: int = 8000, frontend_port: int = 8501) -> None:
     print("Press Ctrl+C to stop both services gracefully.")
     print("-" * 60)
 
-    # Spawn backend as subprocess
-    backend_proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "uvicorn",
-            "app.backend.api:app",
-            "--host",
-            "127.0.0.1",
-            "--port",
-            str(backend_port),
-        ]
-    )
-
-    time.sleep(1.2)
+    backend_proc = None
     frontend_proc = None
 
     try:
+        # Spawn backend as subprocess
+        backend_proc = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "app.backend.api:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(backend_port),
+            ]
+        )
+
+        time.sleep(1.2)
+
         frontend_proc = subprocess.Popen(
             [
                 sys.executable,
@@ -127,7 +129,9 @@ def run_rehearsal() -> None:
 
     # 1. Asset Verification
     print("\n[Step 1/6] Verifying local schemas and multimodal image assets...")
-    assert COORDINATOR_SCHEMA_PATH.exists(), f"Missing coordinator schema: {COORDINATOR_SCHEMA_PATH}"
+    assert COORDINATOR_SCHEMA_PATH.exists(), (
+        f"Missing coordinator schema: {COORDINATOR_SCHEMA_PATH}"
+    )
     with open(COORDINATOR_SCHEMA_PATH, "r", encoding="utf-8") as f:
         coordinator_schema = json.load(f)
 
@@ -182,21 +186,21 @@ def run_rehearsal() -> None:
             "EDGE-05-INACCESSIBLE-SOURCE",
             "EDGE-08-FUTURE-INFORMATION",
         ]:
-            assert (
-                resp.evidence_findings.get("not_found") is True
-            ), f"Expected evidence_not_found=True for {preset.id}"
+            assert resp.evidence_findings.get("not_found") is True, (
+                f"Expected evidence_not_found=True for {preset.id}"
+            )
         elif preset.id == "EDGE-02-NO-GUIDELINE":
-            assert (
-                resp.guideline_findings.get("not_found") is True
-            ), f"Expected guidelines_not_found=True for {preset.id}"
+            assert resp.guideline_findings.get("not_found") is True, (
+                f"Expected guidelines_not_found=True for {preset.id}"
+            )
         elif preset.id in [
             "EDGE-03-CONFLICTING-STUDIES",
             "EDGE-04-CONFLICTING-GUIDELINES",
             "NORM-06-PROPHYLACTIC-STOMA-MESH",
         ]:
-            assert (
-                len(resp.consensus_matrix.get("areas_of_disagreement", [])) > 0
-            ), f"Expected disagreement matrix for {preset.id}"
+            assert len(resp.consensus_matrix.get("areas_of_disagreement", [])) > 0, (
+                f"Expected disagreement matrix for {preset.id}"
+            )
         elif preset.id == "EDGE-07-PATIENT-SAFETY":
             assert (
                 "SAFETY BOUNDARY" in resp.final_synthesis
@@ -222,9 +226,9 @@ def run_rehearsal() -> None:
             mock_mode=True,
         )
         comp_resp = service.execute_comparative_analysis(comp_req)
-        assert (
-            len(comp_resp.scorecard) == 5
-        ), f"Expected 5-dimension scorecard, got {len(comp_resp.scorecard)}"
+        assert len(comp_resp.scorecard) == 5, (
+            f"Expected 5-dimension scorecard, got {len(comp_resp.scorecard)}"
+        )
         assert comp_resp.without_agent.raw_response, f"Missing monolithic baseline for {cid}"
         assert comp_resp.with_agent.final_synthesis, f"Missing multi-agent response for {cid}"
         print(f"  ✓ {cid:<32} Scorecard: 5 dimensions verified, Hallucination delta confirmed")
@@ -273,9 +277,9 @@ def run_rehearsal() -> None:
     edge7_q = next(p.question for p in PRESET_INQUIRIES if p.id == "EDGE-07-PATIENT-SAFETY")
     res_edge, tel_edge = execute_inquiry_offline(edge7_q, verbose=False)
     assert res_edge is None, "adk.run should return None result on patient safety refusal"
-    assert (
-        tel_edge["safety_refusal_triggered"] is True
-    ), "adk.run failed to trigger safety refusal telemetry"
+    assert tel_edge["safety_refusal_triggered"] is True, (
+        "adk.run failed to trigger safety refusal telemetry"
+    )
     print("  ✓ Normal inquiry executed offline with zero network calls")
     print("  ✓ Patient safety inquiry successfully intercepted and refused at CLI boundary")
 

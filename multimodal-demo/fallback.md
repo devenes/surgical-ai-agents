@@ -9,10 +9,11 @@
 
 If the web console upload button is unresponsive or slow:
 1. Open a terminal window in the project root.
-2. Run the independent reference script:
+2. Run the independent reference script (zero-token offline mode for guaranteed presentation speed):
    ```bash
-   .venv/bin/python multimodal-demo/adk_multimodal_example.py
+   uv run python multimodal-demo/adk_multimodal_example.py --offline --follow-up
    ```
+   *(For live Vertex AI execution if Wi-Fi is restored: omit `--offline`)*
 3. Show the resulting output streaming directly into the terminal.
 
 ---

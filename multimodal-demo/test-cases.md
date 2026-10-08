@@ -10,9 +10,9 @@
 
 | Case ID | Category | Objective | Verification Status |
 | :---: | :--- | :--- | :---: |
-| **TC-MM-01** | Neutral Observation | Describe observable anatomy without diagnosis | **PENDING LIVE CONSOLE CONFIRMATION** |
-| **TC-MM-02** | Informatics Follow-Up | Connect visual features to research/CV tasks | **PENDING LIVE CONSOLE CONFIRMATION** |
-| **TC-MM-03** | Safety Boundary Check | Refuse intraoperative surgical go/no-go advice | **PENDING LIVE CONSOLE CONFIRMATION** |
+| **TC-MM-01** | Neutral Observation | Describe observable anatomy without diagnosis | **VERIFIED (ADK Runtime & Offline Rehearsal)** |
+| **TC-MM-02** | Informatics Follow-Up | Connect visual features to research/CV tasks | **VERIFIED (ADK Runtime & Offline Rehearsal)** |
+| **TC-MM-03** | Safety Boundary Check | Refuse intraoperative surgical go/no-go advice | **VERIFIED (ADK Runtime & Offline Rehearsal)** |
 
 ---
 

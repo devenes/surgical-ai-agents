@@ -32,26 +32,26 @@ User Query (Surgical Research Topic)
   │
   ▼
 [Coordinator Agent] (root_agent)
-  │  • Model: gemini-2.5-flash
+  │  • Model: gemini-3.8-flash
   │  • mode: single_turn
   │  • output_schema: StructuredEvidenceBriefModel
   │  • Tools: None directly (prevent Search-Function calling conflict)
   │
   ├──► [Evidence Agent] (sub_agent)
-  │      • Model: gemini-2.5-flash
+  │      • Model: gemini-3.8-flash
   │      • mode: single_turn
   │      • input_schema: EvidenceQueryInput
   │      • Tools: google_search (Grounding)
   │
   └──► [Guideline Agent] (sub_agent)
-         • Model: gemini-2.5-flash
+         • Model: gemini-3.8-flash
          • mode: single_turn
          • input_schema: GuidelineQueryInput
          • Tools: google_search (Grounding)
 ```
 
 ### Coordinator Agent
-- **Factory**: `adk.coordinator.agent.create_coordinator_agent(model_name="gemini-2.5-flash")`
+- **Factory**: `adk.coordinator.agent.create_coordinator_agent(model_name="gemini-3.8-flash")`
 - **Root Export**: `adk/coordinator/agent.py:root_agent`
 - **Delegation Mode**: Native single-turn ADK subagents (`sub_agents=[evidence_agent, guideline_agent]`).
 - **Input**: Natural language surgical research question string.
@@ -87,7 +87,7 @@ User Query (Surgical Research Topic)
 
 | Test Battery | Command | Result |
 | :--- | :--- | :---: |
-| **Offline Unit Tests** | `rtk uv run pytest` | **8/8 PASSED** (5.68s) |
+| **Offline Unit Tests** | `rtk uv run pytest` | **61/61 PASSED** (3.88s) |
 | **Schema Validation** | `Draft7Validator.check_schema` | **3/3 PASSED** |
 | **Live Brief Validation** | `Draft7Validator.validate(live_example)` | **VALID** (346-line brief) |
 | **Live Integration Tests** | `rtk uv run pytest -m integration` | **6/6 PASSED** |

@@ -155,8 +155,8 @@ Run the full offline test suite without consuming any tokens:
 # Run app-specific tests (FastAPI + Streamlit helpers)
 uv run pytest tests/test_unit_app_*.py -v
 
-# Run entire repository test suite (36 offline unit tests)
+# Run entire repository test suite (61 offline unit tests)
 uv run pytest
 ```
 
-All 36 offline tests pass deterministically in under 2 seconds with **zero API tokens consumed**.
+All 61 offline tests pass deterministically in ~4 seconds with **zero API tokens consumed**.

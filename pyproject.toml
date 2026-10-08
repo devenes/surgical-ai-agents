@@ -80,3 +80,6 @@ markers = [
     "integration: live tests requiring Vertex AI credentials and internet access",
 ]
 addopts = "-m not(integration)"
+filterwarnings = [
+    "ignore::starlette.exceptions.StarletteDeprecationWarning",
+]

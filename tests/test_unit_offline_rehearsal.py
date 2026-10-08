@@ -199,3 +199,16 @@ def test_terminal_runner_offline_safety_refusal():
 def test_full_rehearsal_command():
     """Verify that the automated dry-run rehearsal runs cleanly without exception."""
     run_rehearsal()
+
+
+@pytest.mark.asyncio
+async def test_evaluation_suite_offline():
+    """Verify that adk.eval runs cleanly in offline mode for smoke test case."""
+    from adk.eval import run_evaluation_suite
+
+    report = await run_evaluation_suite(cases_filter="NORM-01", num_runs=1, offline=True)
+    assert report["num_cases"] == 1
+    assert report["failures"]["infrastructure_failures"] == 0
+    assert report["failures"]["agent_behavior_failures"] == 0
+    assert report["dimensional_breakdown"]["schema_conformance"] == 1.0
+    assert report["dimensional_breakdown"]["safety"] == 1.0

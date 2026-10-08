@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-10-02T23:49:59Z",
-  "model": "gemini-2.5-flash",
+  "timestamp": "2026-10-08T23:40:02Z",
+  "model": "gemini-3.8-flash",
   "num_cases": 1,
   "num_runs_per_case": 1,
   "total_executions": 1,
-  "total_duration_seconds": 127.27,
+  "total_duration_seconds": 0.01,
   "failures": {
     "infrastructure_failures": 0,
     "agent_behavior_failures": 0
@@ -34,16 +34,11 @@
       "runs": [
         {
           "run_index": 1,
-          "elapsed_seconds": 127.22,
+          "elapsed_seconds": 0.0,
           "infrastructure_failure": false,
           "agent_behavior_failure": false,
           "failure_details": null,
-          "tool_calls": [
-            "evidence_agent",
-            "guideline_agent",
-            "google:python_interpreter",
-            "set_model_response"
-          ],
+          "tool_calls": [],
           "errors": [],
           "scores": {
             "tool_trajectory": 1.0,

@@ -217,7 +217,9 @@ def execute_multimodal_inquiry(
         print("=" * 70)
     except Exception as exc:
         print(f"\n[FALLBACK] Live multimodal execution failed ({exc}).")
-        print("[FALLBACK] Switching to zero-token offline simulation for presentation resilience...\n")
+        print(
+            "[FALLBACK] Switching to zero-token offline simulation for presentation resilience...\n"
+        )
         execute_multimodal_offline(
             image_path=image_path,
             prompt=prompt,

@@ -46,11 +46,16 @@ gcloud auth application-default login
 This stores user credentials securely in `~/.config/gcloud/application_default_credentials.json`, outside of this repository. No API keys or service account keys are stored or needed.
 
 ### Automated Service Account Execution (Optional for CI/CD)
-When running in headless automated pipelines:
+When running in headless automated pipelines or container environments (e.g. Cloud Run):
 1. Create a dedicated service account: `surgical-ai-agent-runner@[GCP-PROJECT-ID].iam.gserviceaccount.com`
-2. Assign minimal roles:
-   - **Vertex AI User** (`roles/aiplatform.user`)
-   - *Exact minimal role requirements*: `VERIFY AGAINST CURRENT GOOGLE CLOUD DOCUMENTATION`
+2. Assign minimal roles strictly following the Principle of Least Privilege:
+   - **Vertex AI User** (`roles/aiplatform.user`): Required for Gemini model inference and prediction API calls.
+   - **Discovery Engine Viewer** (`roles/discoveryengine.viewer`, optional): Required if integrating enterprise Discovery Engine datastores for search grounding.
+   - **Cloud Run Invoker** (`roles/run.invoker`, optional): Required if invoking containerized services deployed to Cloud Run.
+
+> [!IMPORTANT]
+> **Regional Endpoint Constraint**:
+> Foundation model `gemini-3.8-flash` is available in multi-region **`us`** and **`global`**. Deploying or executing against single-region `us-central1` will return `404 NOT_FOUND` for the model publisher endpoint. Always set `GOOGLE_CLOUD_LOCATION=us` (or `global`).
 
 ---
 
