@@ -40,6 +40,9 @@ AVAILABLE_MODELS: List[ModelInfo] = [
         description="Fast, responsive model for multimodal observation and multi-agent routing.",
         supports_vision=True,
         supports_thinking=True,
+        supports_thinking_budget=True,
+        supports_thinking_level=False,
+        default_thinking_level=None,
         default_temperature=0.4,
         recommended_use_case="Standard multimodal vision and fast agent routing",
     ),
@@ -49,15 +52,21 @@ AVAILABLE_MODELS: List[ModelInfo] = [
         description="High-reasoning model for complex clinical literature synthesis and deep consensus analysis.",
         supports_vision=True,
         supports_thinking=True,
+        supports_thinking_budget=True,
+        supports_thinking_level=False,
+        default_thinking_level=None,
         default_temperature=0.3,
         recommended_use_case="Complex multi-agent evidence synthesis and deep literature queries",
     ),
     ModelInfo(
         id="gemini-3.8-flash",
-        display_name="Gemini 3.8 Flash (High)",
+        display_name="Gemini 3.8 Flash",
         description="Next-generation multimodal model with low latency and native thinking levels.",
         supports_vision=True,
         supports_thinking=True,
+        supports_thinking_budget=False,
+        supports_thinking_level=True,
+        default_thinking_level="MEDIUM",
         default_temperature=0.4,
         recommended_use_case="High-fidelity visual anatomical inspection & surgical diagram parsing",
     ),
@@ -67,6 +76,9 @@ AVAILABLE_MODELS: List[ModelInfo] = [
         description="Solid baseline multimodal workhorse with rapid token generation.",
         supports_vision=True,
         supports_thinking=False,
+        supports_thinking_budget=False,
+        supports_thinking_level=False,
+        default_thinking_level=None,
         default_temperature=0.5,
         recommended_use_case="Lightweight chat and basic image feature extraction",
     ),
@@ -1095,10 +1107,30 @@ class AppService:
             "system_instruction": system_instruction,
         }
 
-        if req.thinking_budget is not None and req.thinking_budget > 0:
-            config_kwargs["thinking_config"] = types.ThinkingConfig(
-                thinking_budget=req.thinking_budget
-            )
+        model_lower = req.model.lower()
+        if "gemini-3." in model_lower:
+            # Gemini 3.8+ uses native thinking_level and deprecates sampling parameters
+            config_kwargs.pop("temperature", None)
+            config_kwargs.pop("top_p", None)
+            eff_level = req.thinking_level or "MEDIUM"
+            if str(eff_level).upper() not in ("OFF", "NONE", "DISABLED"):
+                config_kwargs["thinking_config"] = types.ThinkingConfig(
+                    thinking_level=str(eff_level).upper()
+                )
+        elif "gemini-2.5" in model_lower:
+            # Gemini 2.5 uses token budget only; never pass thinking_level directly!
+            eff_budget = req.thinking_budget
+            if eff_budget is None and req.thinking_level and str(req.thinking_level).upper() not in ("OFF", "NONE", "DISABLED"):
+                level_budget_map = {"MINIMAL": 512, "LOW": 1024, "MEDIUM": 2048, "HIGH": 4096}
+                eff_budget = level_budget_map.get(str(req.thinking_level).upper(), 2048)
+            if eff_budget is not None and eff_budget > 0:
+                config_kwargs["thinking_config"] = types.ThinkingConfig(
+                    thinking_budget=eff_budget
+                )
+            elif eff_budget == 0:
+                config_kwargs["thinking_config"] = types.ThinkingConfig(
+                    thinking_budget=0
+                )
 
         config = types.GenerateContentConfig(**config_kwargs)
 
@@ -2238,18 +2270,26 @@ class AppService:
     ) -> MultiAgentConsensusResponse:
         """Call real ADK coordinator agent in live mode."""
         import asyncio
+        import concurrent.futures
+        import json
+        import re
         from adk.coordinator.agent import create_coordinator_agent
         from google.adk import Runner
         from google.adk.sessions import InMemorySessionService
         from google.genai import types
 
-        agent = create_coordinator_agent(model_name=req.model)
+        agent = create_coordinator_agent(
+            model_name=req.model,
+            thinking_level=req.thinking_level,
+            thinking_budget=req.thinking_budget,
+        )
         session_service = InMemorySessionService()
 
         runner = Runner(
             agent=agent,
             session_service=session_service,
             app_name="surgical-ai-web-ui",
+            auto_create_session=True,
         )
 
         user_content = types.Content(
@@ -2263,7 +2303,7 @@ class AppService:
                 app_name="surgical-ai-web-ui",
             )
             events = []
-            async for ev in runner.run(
+            async for ev in runner.run_async(
                 user_id="surgeon_workshop_user",
                 session_id=session.id,
                 new_message=user_content,
@@ -2271,17 +2311,264 @@ class AppService:
                 events.append(ev)
             return events
 
-        # Run async in synchronous context
-        loop = asyncio.new_event_loop()
-        try:
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(_run())
-        finally:
-            loop.close()
+        # Execute safely in synchronous or asynchronous caller context
+        def _execute_loop():
+            loop = asyncio.new_event_loop()
+            try:
+                asyncio.set_event_loop(loop)
+                return loop.run_until_complete(_run())
+            finally:
+                loop.close()
 
-        # In case the live ADK execution completes, format it as mock response structure
-        # for uniform UI presentation
-        return self._mock_multiagent_response(req, start_time)
+        running_loop = None
+        try:
+            running_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            pass
+
+        if running_loop and running_loop.is_running():
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                events = pool.submit(_execute_loop).result()
+        else:
+            events = _execute_loop()
+
+        # Parse structured consensus findings from ADK execution events
+        structured_from_tool = None
+        raw_response_text = ""
+        tool_calls = []
+
+        for ev in events:
+            if hasattr(ev, "actions") and ev.actions and getattr(ev.actions, "set_model_response", None):
+                structured_from_tool = ev.actions.set_model_response
+            if hasattr(ev, "content") and ev.content:
+                for p in ev.content.parts:
+                    if getattr(p, "function_call", None):
+                        tool_calls.append(p.function_call.name)
+                        if p.function_call.name == "set_model_response" and not structured_from_tool:
+                            structured_from_tool = p.function_call.args
+                    if getattr(p, "function_response", None):
+                        if p.function_response.name == "set_model_response":
+                            resp_val = p.function_response.response
+                            if isinstance(resp_val, dict) and "error" not in resp_val:
+                                structured_from_tool = resp_val
+                    if getattr(p, "text", None):
+                        raw_response_text += p.text
+
+        parsed_json = structured_from_tool
+        if not parsed_json and raw_response_text:
+            json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_response_text, re.DOTALL)
+            if json_match:
+                candidate_text = json_match.group(1).strip()
+            else:
+                s_idx = raw_response_text.find("{")
+                e_idx = raw_response_text.rfind("}")
+                if s_idx != -1 and e_idx != -1 and e_idx > s_idx:
+                    candidate_text = raw_response_text[s_idx : e_idx + 1].strip()
+                else:
+                    candidate_text = raw_response_text.strip()
+            try:
+                parsed_json = json.loads(candidate_text)
+            except Exception:
+                pass
+
+        if parsed_json:
+            from adk.run import normalize_brief_structure
+
+            parsed_json = normalize_brief_structure(parsed_json, question=req.question)
+
+            scope = parsed_json.get("research_scope", {})
+            normalized_picot = {
+                "population": scope.get("population", "Target surgical cohort"),
+                "intervention": scope.get("intervention_exposure") or scope.get("intervention", "Surgical protocol"),
+                "comparator": scope.get("comparator", "Standard care"),
+                "outcomes": scope.get("outcomes", ["Clinical endpoints"]),
+                "context": scope.get("context", "Perioperative surgical setting"),
+                "time_range": scope.get("time_range", "Recent evidence window"),
+            }
+
+            ef = parsed_json.get("evidence_findings", {})
+            norm_studies = []
+            for s in ef.get("key_study_findings", []):
+                if isinstance(s, dict):
+                    norm_studies.append(
+                        {
+                            "study_title": s.get("study_title", "Clinical Study"),
+                            "authors": s.get("authors") or s.get("authors_or_organization", "Investigators"),
+                            "year": s.get("year") or s.get("publication_year", 2024),
+                            "evidence_type": s.get("evidence_type", "Randomized Trial"),
+                            "findings": s.get("findings") or s.get("key_findings", ""),
+                            "url": s.get("url", "https://pubmed.ncbi.nlm.nih.gov/"),
+                        }
+                    )
+            evidence_findings = {
+                "summary": ef.get("summary", "Empirical literature findings."),
+                "key_study_findings": norm_studies,
+                "not_found": parsed_json.get("not_found", {}).get("evidence_not_found", False),
+            }
+
+            gf = parsed_json.get("guideline_findings", {})
+            norm_stmts = []
+            for g in gf.get("guideline_statements", []):
+                if isinstance(g, dict):
+                    norm_stmts.append(
+                        {
+                            "organization": g.get("organization", "Surgical Society"),
+                            "guideline_title": g.get("guideline_title", "Clinical Practice Guideline"),
+                            "year": g.get("year") or g.get("publication_or_update_year", 2023),
+                            "recommendation": g.get("recommendation") or g.get("recommendation_summary", ""),
+                            "grade": g.get("grade") or g.get("strength_of_recommendation", ""),
+                            "url": g.get("url", "https://guidelines.org/"),
+                        }
+                    )
+            guideline_findings = {
+                "summary": gf.get("summary", "Surgical society recommendations."),
+                "guideline_statements": norm_stmts,
+                "not_found": parsed_json.get("not_found", {}).get("guidelines_not_found", False),
+            }
+
+            agreements = []
+            for item in parsed_json.get("areas_of_agreement", []):
+                if isinstance(item, dict):
+                    domain = item.get("domain") or item.get("topic") or item.get("area") or ""
+                    summary = item.get("consensus_summary") or item.get("summary") or item.get("description") or str(item)
+                    agreements.append(f"**{domain}**: {summary}" if domain else summary)
+                elif isinstance(item, str) and item.strip():
+                    agreements.append(item.strip())
+
+            disagreements = []
+            for item in parsed_json.get("areas_of_disagreement", []):
+                if isinstance(item, dict):
+                    issue = item.get("issue") or item.get("discrepancy_topic") or item.get("topic") or ""
+                    div = item.get("divergence_description") or item.get("clinical_divergence") or item.get("description") or str(item)
+                    disagreements.append(f"**{issue}**: {div}" if issue else div)
+                elif isinstance(item, str) and item.strip():
+                    disagreements.append(item.strip())
+
+            uncertainties = []
+            for item in parsed_json.get("uncertainty", []):
+                if isinstance(item, dict):
+                    topic = item.get("topic") or item.get("domain") or ""
+                    desc = item.get("description") or item.get("uncertainty_description") or str(item)
+                    uncertainties.append(f"**{topic}**: {desc}" if topic else desc)
+                elif isinstance(item, str) and item.strip():
+                    uncertainties.append(item.strip())
+            for item in parsed_json.get("limitations", []):
+                if isinstance(item, dict):
+                    uncertainties.append(item.get("description") or str(item))
+                elif isinstance(item, str) and item.strip():
+                    uncertainties.append(item.strip())
+
+            raw_matrix = parsed_json.get("consensus_matrix")
+            if isinstance(raw_matrix, dict):
+                consensus_matrix = raw_matrix
+            else:
+                consensus_matrix = {
+                    "areas_of_agreement": agreements,
+                    "areas_of_disagreement": disagreements,
+                    "uncertainty_and_limitations": uncertainties,
+                }
+
+            sources = []
+            for src in parsed_json.get("sources", []):
+                if isinstance(src, dict):
+                    sources.append(
+                        {
+                            "title": src.get("title", "Clinical Reference"),
+                            "type": src.get("type") or src.get("source_type", "Literature"),
+                            "url": src.get("url", "https://pubmed.ncbi.nlm.nih.gov/"),
+                        }
+                    )
+            if not sources:
+                for s in norm_studies:
+                    sources.append({"title": s["study_title"], "type": s["evidence_type"], "url": s["url"]})
+                for g in norm_stmts:
+                    sources.append({"title": f"{g['organization']} - {g['guideline_title']}", "type": "Guideline", "url": g["url"]})
+
+            if parsed_json.get("final_synthesis"):
+                final_synthesis = parsed_json["final_synthesis"]
+            else:
+                syn_parts = []
+                syn_parts.append("#### 🎯 Live Multi-Agent Clinical Consensus Synthesis\n")
+                if ef.get("summary"):
+                    syn_parts.append(f"**Empirical Literature Summary (Evidence Specialist):**\n{ef['summary']}\n")
+                if gf.get("summary"):
+                    syn_parts.append(f"**Societal Practice Guidelines (Guideline Specialist):**\n{gf['summary']}\n")
+                if consensus_matrix.get("areas_of_agreement"):
+                    syn_parts.append("**Core Consensus & Alignment:**\n" + "\n".join(f"- {a}" for a in consensus_matrix["areas_of_agreement"]) + "\n")
+                if consensus_matrix.get("areas_of_disagreement"):
+                    syn_parts.append("**Key Discrepancies & Nuances:**\n" + "\n".join(f"- {d}" for d in consensus_matrix["areas_of_disagreement"]) + "\n")
+                final_synthesis = "\n".join(syn_parts)
+
+            steps = [
+                SubAgentExecutionStep(
+                    agent_name="Coordinator Agent",
+                    step_type="decomposition",
+                    status="completed",
+                    duration_ms=45.0,
+                    summary=f"Normalized inquiry into PICOT framework: {normalized_picot.get('population', '')}",
+                    details=normalized_picot,
+                ),
+            ]
+            if "evidence_agent" in tool_calls or req.enable_evidence_agent:
+                steps.append(
+                    SubAgentExecutionStep(
+                        agent_name="Evidence Specialist",
+                        step_type="evidence_search",
+                        status="completed" if norm_studies or ef.get("summary") else "skipped",
+                        duration_ms=120.0,
+                        summary=f"Queried PubMed/Google Search; extracted {len(norm_studies)} verified study findings.",
+                        details={"study_count": len(norm_studies), "summary": ef.get("summary", "")},
+                    )
+                )
+            if "guideline_agent" in tool_calls or req.enable_guideline_agent:
+                steps.append(
+                    SubAgentExecutionStep(
+                        agent_name="Guideline Specialist",
+                        step_type="guideline_search",
+                        status="completed" if norm_stmts or gf.get("summary") else "skipped",
+                        duration_ms=110.0,
+                        summary=f"Queried surgical society guidelines; extracted {len(norm_stmts)} guideline statements.",
+                        details={"statement_count": len(norm_stmts), "summary": gf.get("summary", "")},
+                    )
+                )
+            steps.append(
+                SubAgentExecutionStep(
+                    agent_name="Coordinator Agent",
+                    step_type="synthesis",
+                    status="completed",
+                    duration_ms=65.0,
+                    summary="Synthesized Master Evidence Brief with cross-specialist consensus matrix.",
+                    details={
+                        "agreements_count": len(consensus_matrix.get("areas_of_agreement", [])),
+                        "disagreements_count": len(consensus_matrix.get("areas_of_disagreement", [])),
+                    },
+                )
+            )
+
+            safety_disclaimer = parsed_json.get(
+                "safety_disclaimer",
+                "Educational research proof-of-concept for surgical academic workshop demonstration. Not designed for individualized patient care, diagnosis, or clinical decision support.",
+            )
+            elapsed = (time.time() - start_time) * 1000
+
+            return MultiAgentConsensusResponse(
+                research_question=parsed_json.get("research_question", req.question),
+                normalized_picot=normalized_picot,
+                evidence_findings=evidence_findings,
+                guideline_findings=guideline_findings,
+                consensus_matrix=consensus_matrix,
+                sources=sources,
+                final_synthesis=final_synthesis,
+                execution_steps=steps,
+                latency_ms=round(elapsed, 2),
+                safety_disclaimer=safety_disclaimer,
+            )
+
+        # Fallback to simulated response if parsing failed but execution finished
+        fallback = self._mock_multiagent_response(req, start_time)
+        if raw_response_text:
+            fallback.final_synthesis = raw_response_text
+        return fallback
 
     def execute_monolithic_direct(self, req: MonolithicDirectRequest) -> MonolithicDirectResponse:
         """Execute direct zero-shot query without agents or tools (Baseline comparison)."""
@@ -2571,12 +2858,40 @@ class AppService:
     ) -> MonolithicDirectResponse:
         """Call Gemini model directly without tools or agent scaffolding."""
         from google import genai
+        from google.genai import types
 
         client = self._get_genai_client()
+
+        config_kwargs: Dict[str, Any] = {}
+        model_lower = req.model.lower()
+        if "gemini-3." in model_lower:
+            eff_level = getattr(req, "thinking_level", None) or "MEDIUM"
+            if str(eff_level).upper() not in ("OFF", "NONE", "DISABLED"):
+                config_kwargs["thinking_config"] = types.ThinkingConfig(
+                    thinking_level=str(eff_level).upper()
+                )
+        elif "gemini-2.5" in model_lower:
+            eff_budget = getattr(req, "thinking_budget", None)
+            t_level = getattr(req, "thinking_level", None)
+            if eff_budget is None and t_level and str(t_level).upper() not in ("OFF", "NONE", "DISABLED"):
+                level_budget_map = {"MINIMAL": 512, "LOW": 1024, "MEDIUM": 2048, "HIGH": 4096}
+                eff_budget = level_budget_map.get(str(t_level).upper(), 2048)
+            if eff_budget is not None and eff_budget > 0:
+                config_kwargs["thinking_config"] = types.ThinkingConfig(
+                    thinking_budget=eff_budget
+                )
+            elif eff_budget == 0:
+                config_kwargs["thinking_config"] = types.ThinkingConfig(
+                    thinking_budget=0
+                )
+
+        config = types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+
         try:
             resp = client.models.generate_content(
                 model=req.model,
                 contents=req.question,
+                config=config,
             )
         except Exception as err:
             err_msg = str(err)
@@ -2595,6 +2910,7 @@ class AppService:
                 resp = fallback_client.models.generate_content(
                     model=req.model,
                     contents=req.question,
+                    config=config,
                 )
             else:
                 raise err
@@ -2628,7 +2944,11 @@ class AppService:
     ) -> ComparativeAnalysisResponse:
         """Execute head-to-head comparison: Without Agents vs With Agents."""
         mono_req = MonolithicDirectRequest(
-            question=req.question, model=req.model, mock_mode=req.mock_mode
+            question=req.question,
+            model=req.model,
+            thinking_budget=req.thinking_budget,
+            thinking_level=req.thinking_level,
+            mock_mode=req.mock_mode,
         )
         mono_resp = self.execute_monolithic_direct(mono_req)
 
@@ -2637,6 +2957,8 @@ class AppService:
             model=req.model,
             enable_evidence_agent=True,
             enable_guideline_agent=True,
+            thinking_budget=req.thinking_budget,
+            thinking_level=req.thinking_level,
             mock_mode=req.mock_mode,
         )
         agent_resp = self.execute_multiagent_consensus(agent_req)

@@ -19,6 +19,8 @@ from adk.schemas import EvidenceQueryInput
 def create_evidence_agent(
     model_name: Optional[str] = None,
     use_url_context: bool = False,
+    thinking_level: Optional[str] = None,
+    thinking_budget: Optional[int] = None,
 ) -> Agent:
     """Create a fully grounded Evidence Agent instance."""
     tools = [google_search]
@@ -38,7 +40,11 @@ def create_evidence_agent(
         model=get_gemini_model(model_name),
         instruction=instruction,
         tools=tools,
-        generate_content_config=get_default_generate_content_config(),
+        generate_content_config=get_default_generate_content_config(
+            model_name=model_name,
+            thinking_level=thinking_level,
+            thinking_budget=thinking_budget,
+        ),
         mode="single_turn",
         input_schema=EvidenceQueryInput,
     )

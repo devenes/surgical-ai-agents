@@ -23,6 +23,8 @@ def create_coordinator_agent(
     model_name: Optional[str] = None,
     evidence_agent: Optional[Agent] = None,
     guideline_agent: Optional[Agent] = None,
+    thinking_level: Optional[str] = None,
+    thinking_budget: Optional[int] = None,
 ) -> Agent:
     """Create the orchestrating Coordinator Agent.
 
@@ -32,8 +34,16 @@ def create_coordinator_agent(
         - Coordinator delegates guideline research to Guideline Agent via single-turn subagent.
         - Output is strictly constrained to StructuredEvidenceBriefModel (JSON Schema).
     """
-    ev_agent = evidence_agent or create_evidence_agent()
-    gd_agent = guideline_agent or create_guideline_agent()
+    ev_agent = evidence_agent or create_evidence_agent(
+        model_name=model_name,
+        thinking_level=thinking_level,
+        thinking_budget=thinking_budget,
+    )
+    gd_agent = guideline_agent or create_guideline_agent(
+        model_name=model_name,
+        thinking_level=thinking_level,
+        thinking_budget=thinking_budget,
+    )
 
     instruction = load_instruction_file("agents/coordinator/instructions.md")
 
@@ -51,7 +61,11 @@ def create_coordinator_agent(
             ev_agent,
             gd_agent,
         ],
-        generate_content_config=get_default_generate_content_config(),
+        generate_content_config=get_default_generate_content_config(
+            model_name=model_name,
+            thinking_level=thinking_level,
+            thinking_budget=thinking_budget,
+        ),
         output_schema=StructuredEvidenceBriefModel,
     )
 

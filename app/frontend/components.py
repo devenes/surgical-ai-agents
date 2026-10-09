@@ -14,38 +14,9 @@ from app.backend.schemas import (
 
 def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
     """Render unified sidebar controls for model selection, tokens, and agents."""
-    st.sidebar.title("🎛️ Control Panel")
+    st.sidebar.title("🩺 Surgical AI Studio")
 
-    # 1. Backend connection mode
-    connection_mode = st.sidebar.radio(
-        "Execution Mode:",
-        ["Direct In-Process", "FastAPI Backend (REST)"],
-        index=0,
-        help="Direct runs in-process with local AppService. REST queries FastAPI at http://127.0.0.1:8000.",
-    )
-
-    fastapi_url = "http://127.0.0.1:8000"
-    if connection_mode == "FastAPI Backend (REST)":
-        fastapi_url = st.sidebar.text_input(
-            "FastAPI URL:",
-            value="http://127.0.0.1:8000",
-            help="Base URL of the running FastAPI server.",
-        )
-
-    # 2. Offline / Token-Saver Mode toggle
-    mock_mode = st.sidebar.checkbox(
-        "⚡ Zero-Token Offline Mode",
-        value=True,
-        help="Returns high-fidelity deterministic responses with ZERO external API calls and ZERO token usage.",
-    )
-    if mock_mode:
-        st.sidebar.caption("🟢 *Offline mode active: 0 API tokens will be consumed.*")
-    else:
-        st.sidebar.caption("⚠️ *Live Vertex AI / Gemini API calls enabled.*")
-
-    st.sidebar.divider()
-
-    # 3. Model Selection
+    # 1. Primary Model Selection
     model_ids = [m.id for m in models]
     model_dict = {m.id: m for m in models}
 
@@ -54,7 +25,7 @@ def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
         return m.display_name if m else mid
 
     selected_model_id = st.sidebar.selectbox(
-        "Select Model:",
+        "Model:",
         options=model_ids,
         format_func=format_model,
         index=0,
@@ -64,14 +35,44 @@ def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
     selected_model_info = model_dict[selected_model_id]
     st.sidebar.caption(f"ℹ️ {selected_model_info.description}")
 
-    # 4. Thinking Budget (if supported)
+    # 2. Reasoning & Thinking Controls
+    st.sidebar.markdown("**🧠 Reasoning & Thinking**")
+    thinking_level: Optional[str] = None
     thinking_budget: Optional[int] = None
-    if selected_model_info.supports_thinking:
+
+    if selected_model_info.supports_thinking_level:
+        # Native Gemini 3.8+ thinking levels
+        level_options = ["MEDIUM", "LOW", "HIGH", "MINIMAL", "Off"]
+        selected_level = st.sidebar.selectbox(
+            "Thinking Level:",
+            options=level_options,
+            index=0,
+            help="Configures reasoning depth for Gemini 3.8 series (MINIMAL, LOW, MEDIUM, HIGH, or Off).",
+        )
+        if selected_level != "Off":
+            thinking_level = selected_level
+        st.sidebar.caption("⚡ *Native Gemini 3.8 thinking level active.*")
+
+    elif selected_model_info.supports_thinking_budget:
+        # Gemini 2.5 series uses token budget; selectable thinking_level maps safely to token budget
+        level_options = ["Off / Default", "LOW", "MEDIUM", "HIGH", "MINIMAL"]
+        selected_level = st.sidebar.selectbox(
+            "Thinking Level:",
+            options=level_options,
+            index=0,
+            help=(
+                "Gemini 2.5 requires thinking_budget (tokens) on Vertex AI and rejects thinking_level. "
+                "Selecting a level maps automatically to token budget to prevent 400 INVALID_ARGUMENT."
+            ),
+        )
+        if selected_level != "Off / Default":
+            thinking_level = selected_level
+
         tb_mode = st.sidebar.selectbox(
             "Thinking Budget Mode:",
             ["Auto", "Manual", "Off"],
             index=0,
-            help="Configures reasoning / thinking token budget for Gemini 2.5/3.8 series.",
+            help="Configures reasoning / thinking token budget for Gemini 2.5.",
         )
         if tb_mode == "Manual":
             thinking_budget = st.sidebar.slider(
@@ -80,12 +81,67 @@ def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
                 max_value=16384,
                 value=2048,
                 step=128,
+                help="Token limit allocated for thinking in Gemini 2.5.",
             )
         elif tb_mode == "Off":
             thinking_budget = 0
+            thinking_level = None
+        elif thinking_level:
+            level_map = {"MINIMAL": 512, "LOW": 1024, "MEDIUM": 2048, "HIGH": 4096}
+            thinking_budget = level_map.get(thinking_level, 2048)
+            st.sidebar.caption(f"ℹ️ *Mapped '{thinking_level}' to `{thinking_budget}` tokens for Gemini 2.5.*")
+        else:
+            st.sidebar.caption("ℹ️ *Gemini 2.5 uses token budget on Vertex AI.*")
+    else:
+        st.sidebar.selectbox(
+            "Thinking Level:",
+            options=["Not supported by model"],
+            index=0,
+            disabled=True,
+            help="Reasoning thinking controls are not supported by this model architecture.",
+        )
+        st.sidebar.caption("ℹ️ *Thinking is not supported by this model.*")
 
-    # 5. Generation Parameters
-    with st.sidebar.expander("⚙️ Advanced Hyperparameters", expanded=False):
+    # 3. Simulation / Offline Mode Toggle
+    mock_mode = st.sidebar.toggle(
+        "⚡ Zero-Token Offline Mode",
+        value=True,
+        help="Returns high-fidelity deterministic responses with ZERO external API calls and ZERO token usage.",
+    )
+    if not mock_mode:
+        st.sidebar.caption("⚠️ *Live Vertex AI / Gemini API calls enabled.*")
+
+    # 4. Sub-Agent Selection
+    st.sidebar.markdown("**🤖 Sub-Agent Pipeline**")
+    enable_evidence = st.sidebar.toggle(
+        "📚 Evidence Specialist",
+        value=True,
+        help="Searches peer-reviewed trials and systematic reviews (PubMed / Google Search).",
+    )
+    enable_guideline = st.sidebar.toggle(
+        "📋 Guideline Specialist",
+        value=True,
+        help="Searches professional surgical society recommendations (ASCRS, ERAS, SAGES).",
+    )
+
+    # 5. Advanced & Backend Settings (Progressive Disclosure)
+    with st.sidebar.expander("⚙️ Advanced & Backend Settings", expanded=False):
+        connection_mode = st.radio(
+            "Execution Mode:",
+            ["Direct In-Process", "FastAPI Backend (REST)"],
+            index=0,
+            help="Direct runs in-process with local AppService. REST queries FastAPI at http://127.0.0.1:8000.",
+        )
+
+        fastapi_url = "http://127.0.0.1:8000"
+        if connection_mode == "FastAPI Backend (REST)":
+            fastapi_url = st.text_input(
+                "FastAPI URL:",
+                value="http://127.0.0.1:8000",
+                help="Base URL of the running FastAPI server.",
+            )
+
+        st.markdown("**Generation Hyperparameters**")
         temperature = st.slider(
             "Temperature (Randomness):",
             min_value=0.0,
@@ -102,27 +158,13 @@ def render_sidebar_controls(models: List[ModelInfo]) -> Dict[str, Any]:
             step=256,
         )
 
-    st.sidebar.divider()
-
-    # 6. Sub-Agent Selection
-    st.sidebar.markdown("### 🤖 Multi-Agent Configuration")
-    enable_evidence = st.sidebar.toggle(
-        "Sub-Agent 1: Evidence Specialist",
-        value=True,
-        help="Searches peer-reviewed trials and systematic reviews (PubMed / Google Search).",
-    )
-    enable_guideline = st.sidebar.toggle(
-        "Sub-Agent 2: Guideline Specialist",
-        value=True,
-        help="Searches professional surgical society recommendations (ASCRS, ERAS, SAGES).",
-    )
-
     return {
         "connection_mode": connection_mode,
         "fastapi_url": fastapi_url,
         "mock_mode": mock_mode,
         "model_id": selected_model_id,
         "model_info": selected_model_info,
+        "thinking_level": thinking_level,
         "thinking_budget": thinking_budget,
         "temperature": temperature,
         "top_p": top_p,

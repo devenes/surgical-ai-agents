@@ -51,3 +51,44 @@ def test_coordinator_agent_construction():
     # Subagents are automatically exposed as SingleTurnAgentTool in tools
     assert any(isinstance(t, AgentTool) for t in agent.tools)
     assert agent.output_schema is not None
+
+
+def test_agent_thinking_configuration_gemini_25_flash():
+    """Verify that Gemini 2.5 never receives thinking_level to avoid 400 ClientError."""
+    from adk.config import get_default_generate_content_config
+
+    # Default call for 2.5 Flash
+    cfg = get_default_generate_content_config(model_name="gemini-2.5-flash")
+    if cfg.thinking_config:
+        assert cfg.thinking_config.thinking_level is None
+
+    # Even if thinking_level is passed, for 2.5 Flash it must NOT be set on thinking_level
+    cfg_level = get_default_generate_content_config(
+        model_name="gemini-2.5-flash", thinking_level="HIGH"
+    )
+    assert cfg_level.thinking_config is not None
+    assert cfg_level.thinking_config.thinking_level is None
+    assert cfg_level.thinking_config.thinking_budget == 4096
+
+    # Verify agent creation with 2.5 Flash
+    agent = create_coordinator_agent(model_name="gemini-2.5-flash", thinking_level="MEDIUM")
+    assert agent.generate_content_config is not None
+    assert agent.generate_content_config.thinking_config.thinking_level is None
+    assert agent.generate_content_config.thinking_config.thinking_budget == 2048
+
+
+def test_agent_thinking_configuration_gemini_38_flash():
+    """Verify that Gemini 3.8 properly configures thinking_level."""
+    from adk.config import get_default_generate_content_config
+
+    cfg = get_default_generate_content_config(
+        model_name="gemini-3.8-flash", thinking_level="HIGH"
+    )
+    assert cfg.thinking_config is not None
+    assert cfg.thinking_config.thinking_budget is None
+    assert str(cfg.thinking_config.thinking_level).upper() in ("HIGH", "THINKINGLEVEL.HIGH")
+
+    agent = create_coordinator_agent(model_name="gemini-3.8-flash", thinking_level="LOW")
+    assert agent.generate_content_config is not None
+    assert str(agent.generate_content_config.thinking_config.thinking_level).upper() in ("LOW", "THINKINGLEVEL.LOW")
+

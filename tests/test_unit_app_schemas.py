@@ -22,23 +22,42 @@ def test_model_info_schema():
         description="Fast multimodal model",
         supports_vision=True,
         supports_thinking=True,
+        supports_thinking_budget=True,
+        supports_thinking_level=False,
     )
     assert model.id == "gemini-2.5-flash"
     assert model.supports_vision is True
     assert model.supports_thinking is True
+    assert model.supports_thinking_budget is True
+    assert model.supports_thinking_level is False
+
+    model_38 = ModelInfo(
+        id="gemini-3.8-flash",
+        display_name="Gemini 3.8 Flash",
+        description="Native thinking level model",
+        supports_thinking_budget=False,
+        supports_thinking_level=True,
+        default_thinking_level="MEDIUM",
+    )
+    assert model_38.supports_thinking_level is True
+    assert model_38.default_thinking_level == "MEDIUM"
 
 
 def test_multimodal_request_validation():
-    # Valid request
+    # Valid request with thinking_level and thinking_budget
     req = MultimodalInquiryRequest(
         prompt="Describe observable anatomy",
         image_base64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        model="gemini-2.5-flash",
+        model="gemini-3.8-flash",
         temperature=0.7,
+        thinking_level="HIGH",
+        thinking_budget=2048,
         mock_mode=True,
     )
     assert req.prompt == "Describe observable anatomy"
     assert req.temperature == 0.7
+    assert req.thinking_level == "HIGH"
+    assert req.thinking_budget == 2048
     assert req.mock_mode is True
 
     # Invalid empty prompt
@@ -55,9 +74,15 @@ def test_multiagent_request_validation():
         question="What is the evidence for prehabilitation in colorectal surgery?",
         enable_evidence_agent=True,
         enable_guideline_agent=True,
+        thinking_level="MEDIUM",
+        thinking_budget=1024,
         mock_mode=True,
     )
     assert req.enable_evidence_agent is True
+    assert req.enable_guideline_agent is True
+    assert req.thinking_level == "MEDIUM"
+    assert req.thinking_budget == 1024
+    assert req.mock_mode is True
     assert req.enable_guideline_agent is True
     assert req.mock_mode is True
 

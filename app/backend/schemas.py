@@ -12,6 +12,9 @@ class ModelInfo(BaseModel):
     description: str
     supports_vision: bool = True
     supports_thinking: bool = False
+    supports_thinking_budget: bool = False
+    supports_thinking_level: bool = False
+    default_thinking_level: Optional[str] = None
     default_temperature: float = 0.4
     recommended_use_case: str = ""
 
@@ -76,6 +79,10 @@ class MultimodalInquiryRequest(BaseModel):
         le=24576,
         description="Thinking budget limit (tokens) for models supporting thinking",
     )
+    thinking_level: Optional[str] = Field(
+        None,
+        description="Thinking level for models supporting thinking_level (e.g., 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH', 'Off')",
+    )
     mock_mode: bool = Field(
         False,
         description="If True, returns deterministic mock response without making live API calls (0 tokens)",
@@ -129,6 +136,16 @@ class MultiAgentConsensusRequest(BaseModel):
     enable_guideline_agent: bool = Field(
         True,
         description="Whether to run Sub-Agent 2 (Guideline Specialist)",
+    )
+    thinking_budget: Optional[int] = Field(
+        None,
+        ge=0,
+        le=24576,
+        description="Thinking budget limit (tokens) for models supporting thinking budget",
+    )
+    thinking_level: Optional[str] = Field(
+        None,
+        description="Thinking level for models supporting thinking_level (e.g., 'MINIMAL', 'LOW', 'MEDIUM', 'HIGH', 'Off')",
     )
     mock_mode: bool = Field(
         False,
@@ -211,6 +228,8 @@ class MonolithicDirectRequest(BaseModel):
 
     question: str = Field(..., min_length=5)
     model: str = Field("gemini-2.5-flash")
+    thinking_budget: Optional[int] = Field(None, ge=0, le=24576)
+    thinking_level: Optional[str] = Field(None)
     mock_mode: bool = Field(False)
 
 
@@ -242,6 +261,8 @@ class ComparativeAnalysisRequest(BaseModel):
     question: str = Field(..., min_length=5)
     case_id: Optional[str] = None
     model: str = Field("gemini-2.5-flash")
+    thinking_budget: Optional[int] = Field(None, ge=0, le=24576)
+    thinking_level: Optional[str] = Field(None)
     mock_mode: bool = Field(False)
 
 
