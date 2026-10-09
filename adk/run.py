@@ -8,7 +8,7 @@ import sys
 import time
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import jsonschema
 from google.adk import Runner
@@ -16,6 +16,14 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from adk.coordinator.agent import create_coordinator_agent
+from adk.schemas import (
+    GENERIC_FINDINGS,
+    map_source_type,
+    validate_author_or_org,
+    validate_title,
+    validate_url,
+    validate_year,
+)
 
 DEFAULT_QUESTION = (
     "For adults undergoing elective colorectal surgery, what outcome measures and study designs "
@@ -88,29 +96,46 @@ def normalize_brief_structure(
     scope = {k: v for k, v in scope.items() if k in allowed_scope_keys}
     data["research_scope"] = scope
 
-    # 4. Normalize not_found
-    if isinstance(data.get("not_found"), bool):
-        val = data["not_found"]
-        data["not_found"] = {
-            "evidence_not_found": val,
-            "guidelines_not_found": val,
-            "details": "" if not val else "No conclusive evidence or guidelines identified.",
-        }
-    elif not isinstance(data.get("not_found"), dict):
-        data["not_found"] = {
-            "evidence_not_found": False,
-            "guidelines_not_found": False,
-            "details": "",
-        }
-    else:
-        nf = data["not_found"]
-        data["not_found"] = {
-            "evidence_not_found": bool(nf.get("evidence_not_found", False)),
-            "guidelines_not_found": bool(nf.get("guidelines_not_found", False)),
-            "details": str(nf.get("details", "") or ""),
-        }
+    # 4. Normalize not_found (Preserve explicit not_found flags without asserting false gaps)
+    raw_nf = data.get("not_found")
+    ef_raw = data.get("evidence_findings")
+    gf_raw = data.get("guideline_findings")
 
-    # 5. Normalize evidence_findings
+    explicit_ev_not_found = False
+    explicit_gd_not_found = False
+    nf_details = ""
+
+    if isinstance(raw_nf, bool):
+        explicit_ev_not_found = raw_nf
+        explicit_gd_not_found = raw_nf
+        nf_details = "No conclusive evidence or guidelines identified." if raw_nf else ""
+    elif isinstance(raw_nf, dict):
+        explicit_ev_not_found = bool(raw_nf.get("evidence_not_found", False))
+        explicit_gd_not_found = bool(raw_nf.get("guidelines_not_found", False))
+        nf_details = str(raw_nf.get("details", "") or "")
+
+    # Preserve explicit not_found from specialist agent sub-blocks
+    if isinstance(ef_raw, dict) and ef_raw.get("not_found") is True:
+        explicit_ev_not_found = True
+        if not nf_details and ef_raw.get("details"):
+            nf_details = str(ef_raw.get("details"))
+    if isinstance(gf_raw, dict) and gf_raw.get("not_found") is True:
+        explicit_gd_not_found = True
+        if not nf_details and gf_raw.get("details"):
+            nf_details = str(gf_raw.get("details"))
+
+    data["not_found"] = {
+        "evidence_not_found": explicit_ev_not_found,
+        "guidelines_not_found": explicit_gd_not_found,
+        "details": nf_details,
+    }
+
+    # Tracking for omitted candidate references
+    omitted_studies_count = 0
+    omitted_guidelines_count = 0
+    omitted_sources_count = 0
+
+    # 5. Normalize evidence_findings (Validate candidates, omit incomplete)
     if not isinstance(data.get("evidence_findings"), dict):
         data["evidence_findings"] = {"summary": "Evidence synthesis", "key_study_findings": []}
     else:
@@ -120,25 +145,50 @@ def normalize_brief_structure(
         if isinstance(raw_studies, list):
             for st in raw_studies:
                 if isinstance(st, dict):
-                    study_item: Dict[str, Any] = {
-                        "study_title": str(st.get("study_title", "Clinical Study")),
-                        "authors_or_organization": str(
-                            st.get("authors_or_organization", "Investigators")
-                        ),
-                        "publication_year": int(st.get("publication_year", 2024)),
-                        "evidence_type": str(st.get("evidence_type", "randomized_trial")),
-                        "key_findings": str(st.get("key_findings", "Findings reported.")),
-                        "url": str(st.get("url", "https://pubmed.ncbi.nlm.nih.gov/")),
-                    }
-                    if "primary_endpoints" in st and isinstance(st["primary_endpoints"], list):
-                        study_item["primary_endpoints"] = [str(x) for x in st["primary_endpoints"]]
-                    norm_studies.append(study_item)
+                    title = validate_title(st.get("study_title"))
+                    author = validate_author_or_org(
+                        st.get("authors_or_organization") or st.get("authors")
+                    )
+                    year = validate_year(st.get("publication_year") or st.get("year"))
+                    url = validate_url(st.get("url"))
+                    etype = str(st.get("evidence_type", "")).strip()
+                    findings = str(st.get("key_findings") or st.get("findings") or "").strip()
+
+                    if (
+                        title
+                        and author
+                        and year is not None
+                        and url
+                        and etype
+                        and etype.lower() not in GENERIC_FINDINGS
+                        and findings
+                        and findings.lower() not in GENERIC_FINDINGS
+                    ):
+                        study_item: Dict[str, Any] = {
+                            "study_title": title,
+                            "authors_or_organization": author,
+                            "publication_year": year,
+                            "evidence_type": etype,
+                            "key_findings": findings,
+                            "url": url,
+                        }
+                        if "primary_endpoints" in st and isinstance(st["primary_endpoints"], list):
+                            study_item["primary_endpoints"] = [
+                                str(x) for x in st["primary_endpoints"]
+                            ]
+                        norm_studies.append(study_item)
+                    else:
+                        omitted_studies_count += 1
+                else:
+                    omitted_studies_count += 1
+
+        summary_text = str(ef.get("summary", "Evidence synthesis") or "Evidence synthesis").strip()
         data["evidence_findings"] = {
-            "summary": str(ef.get("summary", "Evidence synthesis")),
+            "summary": summary_text or "Evidence synthesis",
             "key_study_findings": norm_studies,
         }
 
-    # 6. Normalize guideline_findings
+    # 6. Normalize guideline_findings (Validate candidates, omit incomplete)
     if not isinstance(data.get("guideline_findings"), dict):
         data["guideline_findings"] = {"summary": "Guideline synthesis", "guideline_statements": []}
     else:
@@ -148,68 +198,161 @@ def normalize_brief_structure(
         if isinstance(raw_statements, list):
             for stmt in raw_statements:
                 if isinstance(stmt, dict):
-                    stmt_item: Dict[str, Any] = {
-                        "organization": str(stmt.get("organization", "Surgical Society")),
-                        "guideline_title": str(stmt.get("guideline_title", "Clinical Guideline")),
-                        "publication_or_update_year": int(
-                            stmt.get("publication_or_update_year", 2023)
-                        ),
-                        "recommendation_summary": str(
-                            stmt.get("recommendation_summary", "Recommendation provided.")
-                        ),
-                        "url": str(stmt.get("url", "https://guidelines.org/")),
-                    }
-                    if "strength_of_recommendation" in stmt:
-                        stmt_item["strength_of_recommendation"] = str(
-                            stmt["strength_of_recommendation"]
-                        )
-                    norm_statements.append(stmt_item)
+                    org = validate_author_or_org(stmt.get("organization"))
+                    g_title = validate_title(stmt.get("guideline_title"))
+                    g_year = validate_year(
+                        stmt.get("publication_or_update_year") or stmt.get("year")
+                    )
+                    g_url = validate_url(stmt.get("url"))
+                    rec = str(
+                        stmt.get("recommendation_summary") or stmt.get("recommendation") or ""
+                    ).strip()
+
+                    if (
+                        org
+                        and g_title
+                        and g_year is not None
+                        and g_url
+                        and rec
+                        and rec.lower() not in GENERIC_FINDINGS
+                    ):
+                        stmt_item: Dict[str, Any] = {
+                            "organization": org,
+                            "guideline_title": g_title,
+                            "publication_or_update_year": g_year,
+                            "recommendation_summary": rec,
+                            "url": g_url,
+                        }
+                        if (
+                            "strength_of_recommendation" in stmt
+                            and stmt["strength_of_recommendation"]
+                        ):
+                            stmt_item["strength_of_recommendation"] = str(
+                                stmt["strength_of_recommendation"]
+                            )
+                        elif "grade" in stmt and stmt["grade"]:
+                            stmt_item["strength_of_recommendation"] = str(stmt["grade"])
+                        norm_statements.append(stmt_item)
+                    else:
+                        omitted_guidelines_count += 1
+                else:
+                    omitted_guidelines_count += 1
+
+        g_summary_text = str(gf.get("summary", "Guideline synthesis") or "Guideline synthesis").strip()
         data["guideline_findings"] = {
-            "summary": str(gf.get("summary", "Guideline synthesis")),
+            "summary": g_summary_text or "Guideline synthesis",
             "guideline_statements": norm_statements,
         }
 
-    # 7. Normalize sources
-    sources = data.get("sources", [])
-    valid_source_types = {
-        "systematic_review",
-        "randomized_trial",
-        "observational_study",
-        "practice_guideline",
-        "consensus_statement",
-        "other",
-    }
-    norm_sources = []
-    if isinstance(sources, list):
-        for idx, src in enumerate(sources):
-            if isinstance(src, dict):
-                st_type = str(src.get("source_type", "")).lower()
-                if st_type not in valid_source_types:
-                    if "guideline" in st_type or "practice" in st_type:
-                        st_type = "practice_guideline"
-                    elif "meta" in st_type or "systematic" in st_type or "review" in st_type:
-                        st_type = "systematic_review"
-                    elif "random" in st_type or "trial" in st_type or "rct" in st_type:
-                        st_type = "randomized_trial"
-                    elif "cohort" in st_type or "observational" in st_type:
-                        st_type = "observational_study"
-                    elif "consensus" in st_type or "statement" in st_type:
-                        st_type = "consensus_statement"
-                    else:
-                        st_type = "other"
-                norm_sources.append(
-                    {
-                        "source_id": str(src.get("source_id", f"SRC-{idx + 1:02d}")),
-                        "title": str(src.get("title", "Clinical Source")),
-                        "author_or_institution": str(src.get("author_or_institution", "Authors")),
-                        "year": int(src.get("year", 2024)),
-                        "source_type": st_type,
-                        "url": str(src.get("url", "https://pubmed.ncbi.nlm.nih.gov/")),
-                    }
-                )
-    data["sources"] = norm_sources
+    # 7. Normalize sources (Build validated, consistent source registry)
+    norm_studies = data["evidence_findings"]["key_study_findings"]
+    norm_statements = data["guideline_findings"]["guideline_statements"]
 
-    # 8. Normalize areas_of_agreement
+    studies_by_url = {s["url"].rstrip("/"): s for s in norm_studies}
+    studies_by_title = {s["study_title"].lower(): s for s in norm_studies}
+    guidelines_by_url = {g["url"].rstrip("/"): g for g in norm_statements}
+    guidelines_by_title = {g["guideline_title"].lower(): g for g in norm_statements}
+
+    raw_sources = data.get("sources", [])
+    norm_sources: List[Dict[str, Any]] = []
+    seen_urls = set()
+
+    if isinstance(raw_sources, list):
+        for src in raw_sources:
+            if not isinstance(src, dict):
+                omitted_sources_count += 1
+                continue
+
+            raw_url = str(src.get("url", "")).strip()
+            raw_url_key = raw_url.rstrip("/")
+
+            matched_study = studies_by_url.get(raw_url_key) or studies_by_title.get(
+                str(src.get("title", "")).strip().lower()
+            )
+            matched_guideline = guidelines_by_url.get(raw_url_key) or guidelines_by_title.get(
+                str(src.get("title", "")).strip().lower()
+            )
+
+            if matched_study:
+                v_title = matched_study["study_title"]
+                v_author = matched_study["authors_or_organization"]
+                v_year = matched_study["publication_year"]
+                v_url = matched_study["url"]
+                st_type = map_source_type(
+                    src.get("source_type") or src.get("type") or matched_study["evidence_type"]
+                )
+            elif matched_guideline:
+                v_title = matched_guideline["guideline_title"]
+                v_author = matched_guideline["organization"]
+                v_year = matched_guideline["publication_or_update_year"]
+                v_url = matched_guideline["url"]
+                st_type = map_source_type(
+                    src.get("source_type") or src.get("type") or "practice_guideline"
+                )
+            else:
+                # Standalone candidate reference: must be complete and valid on its own
+                v_title = validate_title(src.get("title"))
+                v_author = validate_author_or_org(
+                    src.get("author_or_institution") or src.get("authors") or src.get("organization")
+                )
+                v_year = validate_year(src.get("year") or src.get("publication_year"))
+                v_url = validate_url(raw_url)
+                st_type = map_source_type(src.get("source_type") or src.get("type"))
+
+            if v_title and v_author and v_year is not None and v_url:
+                dedup_key = v_url.rstrip("/")
+                if dedup_key not in seen_urls:
+                    seen_urls.add(dedup_key)
+                    s_id = str(src.get("source_id") or f"SRC-{len(norm_sources) + 1:02d}")
+                    norm_sources.append(
+                        {
+                            "source_id": s_id,
+                            "title": v_title,
+                            "author_or_institution": v_author,
+                            "year": v_year,
+                            "source_type": st_type,
+                            "url": v_url,
+                        }
+                    )
+            else:
+                omitted_sources_count += 1
+
+    # Include any verified studies not yet in norm_sources
+    for st in norm_studies:
+        dedup_key = st["url"].rstrip("/")
+        if dedup_key not in seen_urls:
+            seen_urls.add(dedup_key)
+            norm_sources.append(
+                {
+                    "source_id": f"SRC-{len(norm_sources) + 1:02d}",
+                    "title": st["study_title"],
+                    "author_or_institution": st["authors_or_organization"],
+                    "year": st["publication_year"],
+                    "source_type": map_source_type(st["evidence_type"]),
+                    "url": st["url"],
+                }
+            )
+
+    # Include any verified guidelines not yet in norm_sources
+    for gl in norm_statements:
+        dedup_key = gl["url"].rstrip("/")
+        if dedup_key not in seen_urls:
+            seen_urls.add(dedup_key)
+            norm_sources.append(
+                {
+                    "source_id": f"SRC-{len(norm_sources) + 1:02d}",
+                    "title": gl["guideline_title"],
+                    "author_or_institution": gl["organization"],
+                    "year": gl["publication_or_update_year"],
+                    "source_type": "practice_guideline",
+                    "url": gl["url"],
+                }
+            )
+
+    data["sources"] = norm_sources
+    valid_source_ids = {s["source_id"] for s in norm_sources}
+
+    # 8. Normalize areas_of_agreement (Retain only citations in valid registry)
     raw_agreement = data.get("areas_of_agreement", [])
     norm_agreement = []
     if isinstance(raw_agreement, list):
@@ -220,7 +363,9 @@ def normalize_brief_structure(
                     "consensus_summary": str(item.get("consensus_summary", "Consensus observed.")),
                 }
                 if "supporting_sources" in item and isinstance(item["supporting_sources"], list):
-                    ag_item["supporting_sources"] = [str(s) for s in item["supporting_sources"]]
+                    ag_item["supporting_sources"] = [
+                        str(s) for s in item["supporting_sources"] if str(s) in valid_source_ids
+                    ]
                 norm_agreement.append(ag_item)
             elif isinstance(item, str) and item.strip():
                 norm_agreement.append(
@@ -231,7 +376,7 @@ def normalize_brief_structure(
                 )
     data["areas_of_agreement"] = norm_agreement
 
-    # 9. Normalize areas_of_disagreement
+    # 9. Normalize areas_of_disagreement (Retain only citations in valid registry)
     raw_disagreement = data.get("areas_of_disagreement", [])
     norm_disagreement = []
     if isinstance(raw_disagreement, list):
@@ -244,7 +389,9 @@ def normalize_brief_structure(
                     ),
                 }
                 if "conflicting_sources" in item and isinstance(item["conflicting_sources"], list):
-                    dis_item["conflicting_sources"] = [str(s) for s in item["conflicting_sources"]]
+                    dis_item["conflicting_sources"] = [
+                        str(s) for s in item["conflicting_sources"] if str(s) in valid_source_ids
+                    ]
                 norm_disagreement.append(dis_item)
             elif isinstance(item, str) and item.strip():
                 norm_disagreement.append(
@@ -276,13 +423,43 @@ def normalize_brief_structure(
                         "uncertainty_rationale": item.strip(),
                     }
                 )
-    data["uncertainty"] = norm_unc
 
     # 11. Normalize limitations and discussion_questions
     if not isinstance(data.get("limitations"), list):
-        data["limitations"] = []
+        norm_limitations = []
     else:
-        data["limitations"] = [str(x) for x in data["limitations"]]
+        norm_limitations = [str(x) for x in data["limitations"]]
+
+    total_omitted = omitted_studies_count + omitted_guidelines_count + omitted_sources_count
+    if total_omitted > 0:
+        omission_note = (
+            f"One or more candidate references ({total_omitted} item{'s' if total_omitted > 1 else ''}) "
+            "were omitted from verified citations because bibliographic metadata "
+            "(title, author/organization, publication year, or specific URL) could not be validated."
+        )
+        if not any(
+            "bibliographic metadata" in lim.lower() or "candidate reference" in lim.lower()
+            for lim in norm_limitations
+        ):
+            norm_limitations.append(omission_note)
+
+        if not any(
+            "unverified" in u.get("topic", "").lower()
+            or "bibliographic metadata" in u.get("uncertainty_rationale", "").lower()
+            for u in norm_unc
+        ):
+            norm_unc.append(
+                {
+                    "topic": "Unverified Candidate References",
+                    "uncertainty_rationale": (
+                        f"{total_omitted} candidate reference(s) could not be validated "
+                        "against required bibliographic standards and were excluded from verified findings."
+                    ),
+                }
+            )
+
+    data["limitations"] = norm_limitations
+    data["uncertainty"] = norm_unc
 
     if not isinstance(data.get("discussion_questions"), list):
         data["discussion_questions"] = []

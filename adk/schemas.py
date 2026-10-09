@@ -4,8 +4,148 @@ Matches agents/*/output-schema.json specifications and provides typed input/outp
 contracts for Evidence Agent and Guideline Agent.
 """
 
-from typing import List, Optional
-from pydantic import BaseModel, Field
+import urllib.parse
+from typing import Any, List, Optional
+from pydantic import BaseModel, Field, field_validator
+
+GENERIC_TITLES = {
+    "clinical study",
+    "clinical guideline",
+    "clinical practice guideline",
+    "clinical source",
+    "clinical reference",
+    "clinical trial",
+    "study",
+    "guideline",
+    "unknown",
+    "n/a",
+    "none",
+}
+
+GENERIC_AUTHORS = {
+    "investigators",
+    "authors",
+    "author",
+    "surgical society",
+    "society",
+    "organization",
+    "unknown",
+    "n/a",
+    "none",
+}
+
+GENERIC_FINDINGS = {
+    "findings reported.",
+    "recommendation provided.",
+    "none",
+    "n/a",
+    "unknown",
+}
+
+VALID_SOURCE_TYPES = {
+    "systematic_review",
+    "randomized_trial",
+    "observational_study",
+    "practice_guideline",
+    "consensus_statement",
+    "other",
+}
+
+
+def validate_title(val: Any) -> Optional[str]:
+    """Validate that title is a non-empty string and not a fabricated generic placeholder."""
+    if not isinstance(val, str):
+        return None
+    cleaned = val.strip()
+    if len(cleaned) < 3 or cleaned.lower() in GENERIC_TITLES:
+        return None
+    return cleaned
+
+
+def validate_author_or_org(val: Any) -> Optional[str]:
+    """Validate that author or issuing organization is non-empty and not a placeholder."""
+    if not isinstance(val, str):
+        return None
+    cleaned = val.strip()
+    if len(cleaned) < 2 or cleaned.lower() in GENERIC_AUTHORS:
+        return None
+    return cleaned
+
+
+def validate_year(val: Any) -> Optional[int]:
+    """Validate that publication year is a valid positive integer in a plausible range."""
+    if isinstance(val, bool) or val is None:
+        return None
+    try:
+        if isinstance(val, str):
+            val_str = val.strip()
+            if not val_str.isdigit():
+                if len(val_str) >= 4 and val_str[:4].isdigit():
+                    val = int(val_str[:4])
+                else:
+                    return None
+            else:
+                val = int(val_str)
+        elif isinstance(val, (int, float)):
+            val = int(val)
+        else:
+            return None
+
+        if 1800 <= val <= 2100:
+            return val
+        return None
+    except (ValueError, TypeError, OverflowError):
+        return None
+
+
+def validate_url(val: Any) -> Optional[str]:
+    """Validate that URL is an absolute HTTP/HTTPS URL and not a generic homepage/placeholder."""
+    if not isinstance(val, str):
+        return None
+    cleaned = val.strip()
+    if not cleaned or cleaned.startswith("#"):
+        return None
+    try:
+        parsed = urllib.parse.urlparse(cleaned)
+        if parsed.scheme.lower() not in ("http", "https"):
+            return None
+        netloc = parsed.netloc.lower()
+        if not netloc or "." not in netloc:
+            return None
+
+        path = parsed.path.rstrip("/")
+        # Reject generic PubMed homepage
+        if netloc in ("pubmed.ncbi.nlm.nih.gov", "www.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov"):
+            if path in ("", "/pubmed"):
+                return None
+        # Reject generic guidelines.org placeholder
+        if netloc in ("guidelines.org", "www.guidelines.org"):
+            if path in ("",):
+                return None
+
+        return cleaned
+    except Exception:
+        return None
+
+
+def map_source_type(val: Any) -> str:
+    """Map evidence/source type string to output-schema enum without manufacturing trial status."""
+    if not isinstance(val, str) or not val.strip():
+        return "other"
+    low = val.lower().strip()
+    if low in VALID_SOURCE_TYPES:
+        return low
+    if "guideline" in low or "practice" in low:
+        return "practice_guideline"
+    if "consensus" in low or "statement" in low or "advisory" in low:
+        return "consensus_statement"
+    if "meta" in low or "systematic" in low or "review" in low:
+        return "systematic_review"
+    if "random" in low or "trial" in low or "rct" in low:
+        return "randomized_trial"
+    if "cohort" in low or "observational" in low or "prospective" in low or "retrospective" in low:
+        return "observational_study"
+    return "other"
 
 
 # =============================================================================
@@ -48,6 +188,38 @@ class StudyFindingModel(BaseModel):
     key_findings: str
     url: str
     primary_endpoints: List[str] = Field(default_factory=list)
+
+    @field_validator("study_title")
+    @classmethod
+    def check_study_title(cls, v: str) -> str:
+        res = validate_title(v)
+        if not res:
+            raise ValueError(f"Invalid or fabricated study title: {v!r}")
+        return res
+
+    @field_validator("authors_or_organization")
+    @classmethod
+    def check_authors(cls, v: str) -> str:
+        res = validate_author_or_org(v)
+        if not res:
+            raise ValueError(f"Invalid or fabricated author/organization: {v!r}")
+        return res
+
+    @field_validator("publication_year")
+    @classmethod
+    def check_year(cls, v: int) -> int:
+        res = validate_year(v)
+        if res is None:
+            raise ValueError(f"Invalid publication year: {v!r}")
+        return res
+
+    @field_validator("url")
+    @classmethod
+    def check_url(cls, v: str) -> str:
+        res = validate_url(v)
+        if not res:
+            raise ValueError(f"Invalid, relative, or generic URL: {v!r}")
+        return res
 
 
 class EvidenceAgentOutputModel(BaseModel):
@@ -99,6 +271,38 @@ class GuidelineStatementModel(BaseModel):
     recommendation_summary: str
     url: str
     strength_of_recommendation: Optional[str] = ""
+
+    @field_validator("organization")
+    @classmethod
+    def check_org(cls, v: str) -> str:
+        res = validate_author_or_org(v)
+        if not res:
+            raise ValueError(f"Invalid or fabricated organization: {v!r}")
+        return res
+
+    @field_validator("guideline_title")
+    @classmethod
+    def check_guideline_title(cls, v: str) -> str:
+        res = validate_title(v)
+        if not res:
+            raise ValueError(f"Invalid or fabricated guideline title: {v!r}")
+        return res
+
+    @field_validator("publication_or_update_year")
+    @classmethod
+    def check_guideline_year(cls, v: int) -> int:
+        res = validate_year(v)
+        if res is None:
+            raise ValueError(f"Invalid guideline year: {v!r}")
+        return res
+
+    @field_validator("url")
+    @classmethod
+    def check_guideline_url(cls, v: str) -> str:
+        res = validate_url(v)
+        if not res:
+            raise ValueError(f"Invalid, relative, or generic guideline URL: {v!r}")
+        return res
 
 
 class GuidelineAgentOutputModel(BaseModel):
@@ -162,6 +366,38 @@ class SourceCitationModel(BaseModel):
     year: int
     source_type: str
     url: str
+
+    @field_validator("title")
+    @classmethod
+    def check_source_title(cls, v: str) -> str:
+        res = validate_title(v)
+        if not res:
+            raise ValueError(f"Invalid or fabricated citation title: {v!r}")
+        return res
+
+    @field_validator("author_or_institution")
+    @classmethod
+    def check_source_author(cls, v: str) -> str:
+        res = validate_author_or_org(v)
+        if not res:
+            raise ValueError(f"Invalid or fabricated author/institution: {v!r}")
+        return res
+
+    @field_validator("year")
+    @classmethod
+    def check_source_year(cls, v: int) -> int:
+        res = validate_year(v)
+        if res is None:
+            raise ValueError(f"Invalid citation year: {v!r}")
+        return res
+
+    @field_validator("url")
+    @classmethod
+    def check_source_url(cls, v: str) -> str:
+        res = validate_url(v)
+        if not res:
+            raise ValueError(f"Invalid, relative, or generic citation URL: {v!r}")
+        return res
 
 
 class AreaOfAgreementModel(BaseModel):

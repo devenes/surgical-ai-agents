@@ -1886,6 +1886,8 @@ class AppService:
                     "title": "ClinicalTrials.gov Protocol Registry (NCT05891234)",
                     "type": "Trial Registry",
                     "url": "https://clinicaltrials.gov",
+                    "author_or_institution": "National Library of Medicine / ClinicalTrials.gov",
+                    "year": 2023,
                 }
             ]
         elif is_txa:
@@ -2389,15 +2391,15 @@ class AppService:
             ef = parsed_json.get("evidence_findings", {})
             norm_studies = []
             for s in ef.get("key_study_findings", []):
-                if isinstance(s, dict):
+                if isinstance(s, dict) and s.get("study_title") and s.get("url"):
                     norm_studies.append(
                         {
-                            "study_title": s.get("study_title", "Clinical Study"),
-                            "authors": s.get("authors") or s.get("authors_or_organization", "Investigators"),
-                            "year": s.get("year") or s.get("publication_year", 2024),
-                            "evidence_type": s.get("evidence_type", "Randomized Trial"),
-                            "findings": s.get("findings") or s.get("key_findings", ""),
-                            "url": s.get("url", "https://pubmed.ncbi.nlm.nih.gov/"),
+                            "study_title": str(s.get("study_title", "")),
+                            "authors": str(s.get("authors") or s.get("authors_or_organization", "")),
+                            "year": int(s.get("year") or s.get("publication_year", 0)),
+                            "evidence_type": str(s.get("evidence_type", "")),
+                            "findings": str(s.get("findings") or s.get("key_findings", "")),
+                            "url": str(s.get("url", "")),
                         }
                     )
             evidence_findings = {
@@ -2409,15 +2411,15 @@ class AppService:
             gf = parsed_json.get("guideline_findings", {})
             norm_stmts = []
             for g in gf.get("guideline_statements", []):
-                if isinstance(g, dict):
+                if isinstance(g, dict) and g.get("guideline_title") and g.get("url"):
                     norm_stmts.append(
                         {
-                            "organization": g.get("organization", "Surgical Society"),
-                            "guideline_title": g.get("guideline_title", "Clinical Practice Guideline"),
-                            "year": g.get("year") or g.get("publication_or_update_year", 2023),
-                            "recommendation": g.get("recommendation") or g.get("recommendation_summary", ""),
-                            "grade": g.get("grade") or g.get("strength_of_recommendation", ""),
-                            "url": g.get("url", "https://guidelines.org/"),
+                            "organization": str(g.get("organization", "")),
+                            "guideline_title": str(g.get("guideline_title", "")),
+                            "year": int(g.get("year") or g.get("publication_or_update_year", 0)),
+                            "recommendation": str(g.get("recommendation") or g.get("recommendation_summary", "")),
+                            "grade": str(g.get("grade") or g.get("strength_of_recommendation", "")),
+                            "url": str(g.get("url", "")),
                         }
                     )
             guideline_findings = {
@@ -2448,7 +2450,7 @@ class AppService:
             for item in parsed_json.get("uncertainty", []):
                 if isinstance(item, dict):
                     topic = item.get("topic") or item.get("domain") or ""
-                    desc = item.get("description") or item.get("uncertainty_description") or str(item)
+                    desc = item.get("description") or item.get("uncertainty_description") or item.get("uncertainty_rationale") or str(item)
                     uncertainties.append(f"**{topic}**: {desc}" if topic else desc)
                 elif isinstance(item, str) and item.strip():
                     uncertainties.append(item.strip())
@@ -2470,19 +2472,14 @@ class AppService:
 
             sources = []
             for src in parsed_json.get("sources", []):
-                if isinstance(src, dict):
+                if isinstance(src, dict) and src.get("title") and src.get("url"):
                     sources.append(
                         {
-                            "title": src.get("title", "Clinical Reference"),
-                            "type": src.get("type") or src.get("source_type", "Literature"),
-                            "url": src.get("url", "https://pubmed.ncbi.nlm.nih.gov/"),
+                            "title": str(src.get("title", "")),
+                            "type": str(src.get("type") or src.get("source_type", "other")),
+                            "url": str(src.get("url", "")),
                         }
                     )
-            if not sources:
-                for s in norm_studies:
-                    sources.append({"title": s["study_title"], "type": s["evidence_type"], "url": s["url"]})
-                for g in norm_stmts:
-                    sources.append({"title": f"{g['organization']} - {g['guideline_title']}", "type": "Guideline", "url": g["url"]})
 
             if parsed_json.get("final_synthesis"):
                 final_synthesis = parsed_json["final_synthesis"]
