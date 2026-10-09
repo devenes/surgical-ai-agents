@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-10-08T23:40:02Z",
+  "timestamp": "2026-10-09T20:55:04Z",
   "model": "gemini-3.8-flash",
   "num_cases": 1,
   "num_runs_per_case": 1,
   "total_executions": 1,
-  "total_duration_seconds": 0.01,
+  "total_duration_seconds": 0.03,
   "failures": {
     "infrastructure_failures": 0,
     "agent_behavior_failures": 0
@@ -34,7 +34,7 @@
       "runs": [
         {
           "run_index": 1,
-          "elapsed_seconds": 0.0,
+          "elapsed_seconds": 0.01,
           "infrastructure_failure": false,
           "agent_behavior_failure": false,
           "failure_details": null,

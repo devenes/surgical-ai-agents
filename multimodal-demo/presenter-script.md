@@ -25,7 +25,7 @@
 ### Minute 26:00 – 27:30: Stage 1 — Neutral Visual Observation
 - **Presenter Actions**:
   1. Click the **Attach Image** icon (+ or paperclip).
-  2. Select `multimodal-demo/assets/laparoscopic_cvs_schematic.png`.
+  2. Select `multimodal-demo/assets/miliary-tuberculosis-5.jpeg`.
   3. Paste Prompt 1 from `multimodal-demo/prompt.md`:
      ```text
      Describe only the observable visual features in this image. Do not diagnose disease, identify a patient, recommend treatment, or infer a clinical decision.

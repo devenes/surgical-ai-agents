@@ -85,11 +85,13 @@ def list_models() -> List[ModelInfo]:
 
 @app.get("/api/presets", tags=["Catalog"])
 def get_presets() -> Dict[str, Any]:
-    """Fetch pre-configured surgical inquiries and reference schematic images."""
+    """Fetch pre-configured surgical inquiries, reference schematic images, and videos."""
     inquiries, images = service.get_presets()
+    videos = service.get_preset_videos()
     return {
         "inquiries": inquiries,
         "images": images,
+        "videos": videos,
     }
 
 
@@ -100,6 +102,15 @@ def get_preset_image(image_id: str):
     if not img_bytes:
         raise HTTPException(status_code=404, detail=f"Preset image '{image_id}' not found.")
     return Response(content=img_bytes, media_type="image/png")
+
+
+@app.get("/api/presets/video/{video_id}", tags=["Catalog"])
+def get_preset_video(video_id: str):
+    """Retrieve raw bytes of a bundled medical video."""
+    vid_bytes = service.get_preset_video_bytes(video_id)
+    if not vid_bytes:
+        raise HTTPException(status_code=404, detail=f"Preset video '{video_id}' not found.")
+    return Response(content=vid_bytes, media_type="video/mp4")
 
 
 @app.post("/api/multimodal", response_model=MultimodalInquiryResponse, tags=["Multimodal Vision"])

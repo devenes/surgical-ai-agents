@@ -30,15 +30,15 @@ DEFAULT_LOCATION: str = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.ge
 )
 DEFAULT_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
-DEFAULT_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "laparoscopic_cvs_schematic.png"
+DEFAULT_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "miliary-tuberculosis-5.jpeg"
 
 DEFAULT_PROMPT = (
-    "Describe only the observable visual anatomical and operative features in this image. "
+    "Describe only the observable visual anatomical and radiological features in this image. "
     "Do not diagnose disease, identify a patient, recommend treatment, or infer a clinical decision."
 )
 
 FOLLOW_UP_PROMPT = (
-    "Based on those observable features, explain what kinds of surgical research or "
+    "Based on those observable features, explain what kinds of medical research or "
     "computer-vision tasks might use similar visual information. Keep the answer educational "
     "and non-clinical."
 )

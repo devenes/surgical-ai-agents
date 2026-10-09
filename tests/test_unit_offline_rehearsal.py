@@ -48,7 +48,7 @@ def test_preset_catalog_completeness():
     assert len(edge_cases) == 8
 
     assert len(PRESET_IMAGES) >= 1
-    sample_img = DEMO_ASSET_DIR / "laparoscopic_cvs_schematic.png"
+    sample_img = DEMO_ASSET_DIR / "miliary-tuberculosis-5.jpeg"
     assert sample_img.exists()
     assert sample_img.stat().st_size > 0
 
@@ -152,22 +152,37 @@ def test_comparative_analysis_scorecard_offline(service, case_id):
 def test_multimodal_vision_offline(service):
     """Test multimodal vision studio offline execution."""
     req = MultimodalInquiryRequest(
-        prompt="Describe observable anatomical features of the Critical View of Safety.",
-        preset_image_id="lap_cvs_schematic",
+        prompt="Describe observable anatomical features in this chest radiograph.",
+        preset_image_id="cxr_miliary_tb",
         mock_mode=True,
     )
     resp = service.execute_multimodal(req)
 
     assert resp.text != ""
     assert (
-        "Calot" in resp.text
-        or "Critical View of Safety" in resp.text
-        or "cystic" in resp.text.lower()
+        "miliary" in resp.text.lower()
+        or "radiological" in resp.text.lower()
+        or "micronodular" in resp.text.lower()
     )
     assert (
         "educational" in resp.safety_disclaimer.lower()
         or "not designed" in resp.safety_disclaimer.lower()
+        or "research" in resp.safety_disclaimer.lower()
     )
+    assert resp.token_estimate == 0
+
+
+def test_multimodal_video_offline(service):
+    """Test multimodal video studio offline execution."""
+    req = MultimodalInquiryRequest(
+        prompt="Describe ventricular contraction in this echocardiogram video clip.",
+        preset_video_id="echo_apical_4_chamber",
+        mock_mode=True,
+    )
+    resp = service.execute_multimodal(req)
+
+    assert resp.text != ""
+    assert "echocardiographic" in resp.text.lower() or "ventricle" in resp.text.lower()
     assert resp.token_estimate == 0
 
 

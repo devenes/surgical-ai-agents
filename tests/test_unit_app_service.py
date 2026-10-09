@@ -30,27 +30,35 @@ def test_service_presets(service):
     assert len(inquiries) >= 3
     assert len(images) >= 1
     assert any("prehab" in q.id.lower() for q in inquiries)
-    assert any("cvs" in img.id for img in images)
+    assert any("tb" in img.id or "xray" in img.id for img in images)
 
 
 def test_service_preset_image_bytes(service):
-    img_bytes = service.get_preset_image_bytes("lap_cvs_schematic")
+    img_bytes = service.get_preset_image_bytes("cxr_miliary_tb")
     assert img_bytes is not None
     assert len(img_bytes) > 0
 
     assert service.get_preset_image_bytes("nonexistent_unknown_id") is None
 
 
+def test_service_preset_video_bytes(service):
+    vids = service.get_preset_videos()
+    assert len(vids) >= 1
+    vid_bytes = service.get_preset_video_bytes("echo_apical_4_chamber")
+    assert vid_bytes is not None
+    assert len(vid_bytes) > 0
+
+
 def test_service_multimodal_mock(service):
     req = MultimodalInquiryRequest(
-        prompt="Describe anatomy in schematic",
-        preset_image_id="lap_cvs_schematic",
+        prompt="Describe anatomy in radiograph",
+        preset_image_id="cxr_miliary_tb",
         model="gemini-2.5-flash",
         mock_mode=True,
     )
     resp = service.execute_multimodal(req)
     assert resp.text != ""
-    assert "Hepatocystic Triangle" in resp.text or "Critical View of Safety" in resp.text
+    assert "Miliary" in resp.text or "Radiological" in resp.text
     assert resp.token_estimate == 0
     assert len(resp.visual_elements_detected) > 0
 

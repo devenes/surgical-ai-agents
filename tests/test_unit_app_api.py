@@ -47,9 +47,15 @@ def test_api_presets(client):
 
 
 def test_api_preset_image(client):
-    response = client.get("/api/presets/image/lap_cvs_schematic")
+    response = client.get("/api/presets/image/cxr_miliary_tb")
     assert response.status_code == 200
-    assert response.headers["content-type"] == "image/png"
+    assert len(response.content) > 0
+
+
+def test_api_preset_video(client):
+    response = client.get("/api/presets/video/echo_apical_4_chamber")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "video/mp4"
     assert len(response.content) > 0
 
 

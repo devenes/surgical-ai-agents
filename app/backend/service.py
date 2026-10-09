@@ -1,10 +1,14 @@
 """Core application service logic for multimodal inference and multi-agent coordination."""
 
 import base64
+import mimetypes
 import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from app.backend.schemas import (
     ComparativeAnalysisRequest,
@@ -21,12 +25,13 @@ from app.backend.schemas import (
     PICOTDecomposeResponse,
     PresetImage,
     PresetInquiry,
+    PresetVideo,
     SubAgentExecutionStep,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEMO_ASSET_DIR = REPO_ROOT / "multimodal-demo" / "assets"
-DEFAULT_IMAGE_PATH = DEMO_ASSET_DIR / "laparoscopic_cvs_schematic.png"
+DEFAULT_IMAGE_PATH = DEMO_ASSET_DIR / "miliary-tuberculosis-5.jpeg"
 
 AVAILABLE_MODELS: List[ModelInfo] = [
     ModelInfo(
@@ -306,22 +311,112 @@ PRESET_INQUIRIES: List[PresetInquiry] = [
 
 PRESET_IMAGES: List[PresetImage] = [
     PresetImage(
-        id="lap_cvs_schematic",
-        title="Critical View of Safety (CVS) Schematic",
-        filename="laparoscopic_cvs_schematic.png",
-        description="Schematic diagram demonstrating the hepatocystic triangle dissection and the three requirements for achieving CVS.",
+        id="cxr_miliary_tb",
+        title="Chest Radiograph: Miliary Pattern",
+        filename="miliary-tuberculosis-5.jpeg",
+        description="Chest radiograph (PA view) displaying bilateral, diffuse, fine micronodular pulmonary opacities ('miliary' distribution).",
         suggested_prompts=[
             (
-                "Describe only the observable visual anatomical and operative features in this image. "
-                "Do not diagnose disease, identify a patient, recommend treatment, or infer a clinical decision."
+                "Describe only the observable visual radiological features in this chest radiograph. "
+                "Assess pulmonary parenchymal findings, distribution of opacities, and cardiothoracic silhouette."
             ),
             (
-                "Identify the specific anatomical structures and clearances illustrated that constitute "
-                "the 3 criteria of the Critical View of Safety (CVS)."
+                "Detail the distribution, size, and symmetry of the diffuse micronodular pattern visible across both lung fields."
             ),
             (
-                "Based on the visual features, what computer vision or object-segmentation tasks in "
-                "robotic surgery research could utilize similar schematic annotations?"
+                "What objective anatomical landmarks and technical projection aspects (PA vs AP, inspiration, exposure) are observed?"
+            ),
+        ],
+    ),
+    PresetImage(
+        id="xray_shoulder_dislocation",
+        title="Shoulder X-Ray: Anterior Dislocation",
+        filename="anterior-shoulder-dislocation-26.jpeg",
+        description="Plain radiograph of the shoulder joint showing relationship between the humeral head and the glenoid fossa.",
+        suggested_prompts=[
+            (
+                "Describe only the observable visual osseous structures and articular alignment of the glenohumeral joint."
+            ),
+            (
+                "Evaluate the position of the humeral head relative to the glenoid rim and coracoid process."
+            ),
+            (
+                "Identify visible anatomical landmarks including clavicle, acromion, scapula, and proximal humerus."
+            ),
+        ],
+    ),
+    PresetImage(
+        id="xray_phalanx_fracture",
+        title="Hand Radiograph: Phalanx Fracture",
+        filename="phalanx-fracture-hand.png",
+        description="Plain X-ray of the hand demonstrating bony cortical continuity and alignment of the phalanges and metacarpals.",
+        suggested_prompts=[
+            (
+                "Describe the observable osseous cortex, trabecular architecture, and any cortical disruption in the phalanges."
+            ),
+            (
+                "Identify anatomical alignment of the metacarpophalangeal and interphalangeal joints shown in this radiograph."
+            ),
+            (
+                "What objective image features (fracture line location, displacement, angulation) can be visually characterized?"
+            ),
+        ],
+    ),
+    PresetImage(
+        id="xray_osteochondroma_femur",
+        title="Femur X-Ray: Osteochondroma Lesion",
+        filename="osteochondroma-femur-7.png",
+        description="Plain radiograph of the distal/metadiaphyseal femur demonstrating a bony projection continuous with the cortex and medullary cavity.",
+        suggested_prompts=[
+            (
+                "Describe the observable osseous outgrowth, its corticomedullary continuity, and relation to the host bone cortex."
+            ),
+            (
+                "Characterize the morphology (pedunculated vs sessile) and margin characteristics visible in this radiograph."
+            ),
+            (
+                "Identify surrounding joint spaces, adjacent soft tissue shadows, and normal cortical bone boundaries."
+            ),
+        ],
+    ),
+    PresetImage(
+        id="cxr_pulmonary_calcification",
+        title="Chest Radiograph: Metastatic Calcification",
+        filename="pulmonary-metastatic-calcification.jpeg",
+        description="Chest radiograph illustrating parenchymal high-density confluent opacities and calcifications.",
+        suggested_prompts=[
+            (
+                "Describe the distribution, density, and radiographic characteristics of the parenchymal opacities in this chest X-ray."
+            ),
+            (
+                "Evaluate the mediastinal contours, cardiac silhouette, costophrenic angles, and diaphragmatic contours."
+            ),
+            (
+                "Analyze the technical factors and bilateral zonal distribution of the observed pulmonary findings."
+            ),
+        ],
+    ),
+]
+
+PRESET_VIDEOS: List[PresetVideo] = [
+    PresetVideo(
+        id="echo_apical_4_chamber",
+        title="Transthoracic Echocardiogram: Apical 4-Chamber View",
+        filename="apical_4_chamber_echo.mp4",
+        description="Dynamic ultrasound echocardiography video showing real-time contraction of the left and right ventricles and atria in the apical 4-chamber projection.",
+        duration_sec=3.0,
+        suggested_prompts=[
+            (
+                "Describe the observable cardiac structures and dynamic wall motion in this apical 4-chamber echocardiogram video clip."
+            ),
+            (
+                "Evaluate the contraction and symmetry of the left ventricle (LV) vs right ventricle (RV) across the cardiac cycle."
+            ),
+            (
+                "What intracardiac echogenicity, spontaneous contrast ('smoke'), or valvular excursion patterns can be visually characterized?"
+            ),
+            (
+                "What computer vision or temporal video analysis benchmarks (e.g. ejection fraction estimation, chamber segmentation) use similar clips?"
             ),
         ],
     ),
@@ -342,6 +437,10 @@ class AppService:
         """Return preset questions and sample images."""
         return PRESET_INQUIRIES, PRESET_IMAGES
 
+    def get_preset_videos(self) -> List[PresetVideo]:
+        """Return preset medical video catalog."""
+        return PRESET_VIDEOS
+
     def get_preset_image_bytes(self, preset_id: Optional[str] = None) -> Optional[bytes]:
         """Load bundled preset image by identifier."""
         if not preset_id:
@@ -352,6 +451,19 @@ class AppService:
                 path = DEMO_ASSET_DIR / p.filename
                 if path.exists():
                     return path.read_bytes()
+        return None
+
+    def get_preset_video_bytes(self, preset_id: Optional[str] = None) -> Optional[bytes]:
+        """Load bundled preset video by identifier."""
+        for v in PRESET_VIDEOS:
+            if v.id == preset_id:
+                path = DEMO_ASSET_DIR / v.filename
+                if path.exists():
+                    return path.read_bytes()
+        if preset_id == "echo_apical_4_chamber" or preset_id is None:
+            default_vid = DEMO_ASSET_DIR / "apical_4_chamber_echo.mp4"
+            if default_vid.exists():
+                return default_vid.read_bytes()
         return None
 
     def execute_multimodal(self, req: MultimodalInquiryRequest) -> MultimodalInquiryResponse:
@@ -696,13 +808,56 @@ class AppService:
 
     def _has_credentials(self) -> bool:
         """Check whether Google Cloud ADC or GOOGLE_API_KEY is present."""
-        if os.environ.get("GOOGLE_API_KEY"):
+        if os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY"):
             return True
-        if os.environ.get("GOOGLE_CLOUD_PROJECT") or os.environ.get(
-            "GOOGLE_APPLICATION_CREDENTIALS"
+        if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") or os.environ.get(
+            "GOOGLE_CLOUD_PROJECT"
         ):
             return True
-        return False
+        try:
+            import google.auth
+
+            _, project = google.auth.default()
+            return bool(project)
+        except Exception:
+            return False
+
+    def _get_genai_client(self) -> Any:
+        """Create and return configured Google GenAI client for live inference."""
+        from google import genai
+
+        api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if api_key:
+            return genai.Client(api_key=api_key)
+
+        project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+        if not project:
+            try:
+                import google.auth
+
+                _, default_proj = google.auth.default()
+                project = default_proj
+            except Exception:
+                pass
+
+        location = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get(
+            "GOOGLE_CLOUD_REGION", "us-central1"
+        )
+
+        # Standard Vertex AI location fallback: if location is set to multi-region 'us'
+        # where specific publisher models might return 404, fallback to 'us-central1'
+        client_kwargs: Dict[str, Any] = {
+            "vertexai": True,
+            "location": location,
+        }
+        if project:
+            client_kwargs["project"] = project
+
+        try:
+            return genai.Client(**client_kwargs)
+        except Exception:
+            client_kwargs["location"] = "us-central1"
+            return genai.Client(**client_kwargs)
 
     def _mock_multimodal_response(
         self, req: MultimodalInquiryRequest, start_time: float
@@ -711,34 +866,156 @@ class AppService:
         time.sleep(0.05)  # Simulate light computation
         elapsed = (time.time() - start_time) * 1000
 
-        text = (
-            "### 🔍 Structured Visual Observation\n\n"
-            "**1. Observable Anatomical Features & Dissection Plane:**\n"
-            "- **Hepatocystic Triangle (Calot's Triangle):** Visualized with clearance of fibro-fatty tissue "
-            "between the gallbladder neck, cystic duct, and liver bed.\n"
-            "- **Cystic Plate Exposure:** The lower third of the gallbladder has been separated and mobilized "
-            "from the liver bed, demonstrating the reflective white cystic plate.\n"
-            "- **Two Cardinal Structures:** Exactly two distinct tubular structures are visible entering the "
-            "gallbladder: the **cystic artery** and the **cystic duct**.\n"
-            "- **Hepatic Parenchyma:** Posterior liver bed is clearly exposed without aberrant posterior biliary branches visible.\n\n"
-            "**2. Conformance with Critical View of Safety (CVS) Criteria:**\n"
-            "- ✅ **Criterion 1:** Hepatocystic triangle is completely cleared of fat and fibrous tissue.\n"
-            "- ✅ **Criterion 2:** The lower third of the gallbladder is detached from the liver bed exposing the cystic plate.\n"
-            "- ✅ **Criterion 3:** Two and only two structures enter the gallbladder.\n\n"
-            "**3. Educational & Surgical Research Context:**\n"
-            "- This visual schematic demonstrates the target state prior to clipping or dividing any structures in "
-            "laparoscopic cholecystectomy.\n"
-            "- In surgical data science and AI applications, this visual archetype is commonly used as a ground truth "
-            "annotation model for semantic segmentation (segmenting cystic artery vs. cystic duct) and phase detection algorithms."
-        )
+        preset_id = req.preset_image_id or ""
 
-        elements = [
-            "Hepatocystic Triangle",
-            "Cystic Duct",
-            "Cystic Artery",
-            "Cystic Plate (Liver Bed)",
-            "Gallbladder Infundibulum",
-        ]
+        if preset_id == "cxr_miliary_tb" or "miliary" in req.prompt.lower():
+            text = (
+                "### 🔍 Structured Radiological Observation (CXR: Miliary Pattern)\n\n"
+                "**1. Observable Pulmonary Parenchymal Features:**\n"
+                "- **Micronodular Distribution:** Bilateral, symmetric, diffuse micronodular interstitial opacities "
+                "uniformly distributed throughout both the upper, middle, and lower lung zones (classical 'miliary' pattern).\n"
+                "- **Nodule Size & Morphology:** Discrete, well-circumscribed, non-calcified nodules measuring approximately "
+                "1-2 mm in diameter, without evidence of cavitation, large confluent consolidation, or pneumothorax.\n"
+                "- **Pleural & Diaphragmatic Contours:** Costophrenic angles are well preserved with sharp sulci. "
+                "Diaphragmatic domes are smooth without blunting or elevation.\n\n"
+                "**2. Mediastinal & Osseous Findings:**\n"
+                "- **Cardiothoracic Ratio:** Normal transverse cardiac silhouette within expected limits (<0.50).\n"
+                "- **Trachea & Hilum:** Trachea is midline. Hilar shadows appear symmetrical without overt gross bulky adenopathy.\n"
+                "- **Bony Thorax:** Visualized clavicles, ribs, and vertebral elements show intact cortical outlines without lytic or blastic lesions.\n\n"
+                "**3. Educational & Surgical Research Context:**\n"
+                "- This pattern serves as an exemplar for chest radiograph classification and automated nodule detection benchmarks."
+            )
+            elements = [
+                "Bilateral Diffuse Micronodules",
+                "Lung Parenchyma",
+                "Midline Trachea",
+                "Sharp Costophrenic Angles",
+                "Intact Bony Thorax",
+            ]
+        elif preset_id == "xray_shoulder_dislocation" or "shoulder" in req.prompt.lower():
+            text = (
+                "### 🔍 Structured Radiological Observation (Shoulder Plain Radiograph)\n\n"
+                "**1. Articular Alignment & Osseous Relations:**\n"
+                "- **Glenohumeral Disruption:** The humeral head is displaced anteriorly and medially relative to the glenoid fossa.\n"
+                "- **Subcoracoid Position:** The humeral head projects inferomedially, positioned anterior/inferior to the coracoid process.\n"
+                "- **Glenoid Rim:** Intact glenoid fossa outline visible; no obvious Bankart osseous fragment identified on this projection.\n\n"
+                "**2. Regional Anatomy:**\n"
+                "- **Clavicle & Acromion:** Acromioclavicular joint spacing appears maintained.\n"
+                "- **Shaft of Humerus:** Proximal humerus shows preserved cortical continuity without displaced surgical neck fracture.\n\n"
+                "**3. Educational Context:**\n"
+                "- Classical projection used in orthopedic residency training for identifying joint dislocation vs. fracture-dislocation."
+            )
+            elements = [
+                "Displaced Humeral Head",
+                "Glenoid Fossa",
+                "Coracoid Process",
+                "Acromioclavicular Alignment",
+                "Proximal Humerus",
+            ]
+        elif preset_id == "xray_phalanx_fracture" or "phalanx" in req.prompt.lower():
+            text = (
+                "### 🔍 Structured Radiological Observation (Hand / Phalanx Radiograph)\n\n"
+                "**1. Osseous Cortical Integrity:**\n"
+                "- **Cortical Disruption:** Clear radiolucent fracture line visible interrupting the cortical margin of the phalanx.\n"
+                "- **Alignment & Displacement:** Minimal angulation noted; joint congruity at adjacent interphalangeal articulations is maintained.\n"
+                "- **Soft Tissue Shadow:** Mild focal soft tissue swelling overlying the fracture site.\n\n"
+                "**2. Educational Context:**\n"
+                "- Demonstrates traumatic hand skeletal injury identification for trauma and plastic surgery education."
+            )
+            elements = [
+                "Phalangeal Cortical Break",
+                "Fracture Line",
+                "Interphalangeal Joints",
+                "Soft Tissue Swelling",
+            ]
+        elif preset_id == "xray_osteochondroma_femur" or "osteochondroma" in req.prompt.lower():
+            text = (
+                "### 🔍 Structured Radiological Observation (Femur Radiograph)\n\n"
+                "**1. Lesion Characteristics:**\n"
+                "- **Corticomedullary Continuity:** Exostosis arising from the metaphyseal region of the femur with direct continuity "
+                "between host cortex/medulla and the lesion's cortex/medullary cavity.\n"
+                "- **Orientation:** The bony projection points away from the adjacent joint.\n"
+                "- **Margins:** Well-defined margins without aggressive periosteal reaction or adjacent cortical permeation.\n\n"
+                "**2. Educational Context:**\n"
+                "- Archetypal benign osseous neoplasm (osteochondroma) used in musculoskeletal radiology education."
+            )
+            elements = [
+                "Corticomedullary Continuity",
+                "Exostosis",
+                "Femoral Metaphysis",
+                "Well-Defined Margins",
+            ]
+        elif preset_id == "cxr_pulmonary_calcification" or "calcification" in req.prompt.lower():
+            text = (
+                "### 🔍 Structured Radiological Observation (Chest Radiograph: Metastatic Calcification)\n\n"
+                "**1. Parenchymal Findings:**\n"
+                "- **Confluent High-Density Opacities:** Extensive dense parenchymal opacities exhibiting calcific attenuation "
+                "predominantly in the upper and mid lung zones.\n"
+                "- **Bilateral Distribution:** Bilateral involvement with relative sparing of extreme bases.\n"
+                "- **Mediastinum:** Cardiac silhouette and central vasculature visualized.\n\n"
+                "**2. Educational Context:**\n"
+                "- Illustrates high-attenuation metabolic or dystrophic pulmonary parenchymal deposits."
+            )
+            elements = [
+                "High-Density Calcific Opacities",
+                "Upper/Mid Zone Distribution",
+                "Mediastinal Outlines",
+            ]
+        elif (
+            preset_id == "echo_apical_4_chamber"
+            or req.preset_video_id == "echo_apical_4_chamber"
+            or "echo" in req.prompt.lower()
+            or "ultrasound" in req.prompt.lower()
+            or "chamber" in req.prompt.lower()
+        ):
+            text = (
+                "### 🔍 Structured Dynamic Echocardiographic Observation (Apical 4-Chamber Video)\n\n"
+                "**1. Observable Cardiac Anatomy & Projection:**\n"
+                "- **Chamber Orientation:** Transthoracic apical 4-chamber orientation visualizing the Left Ventricle (LV), "
+                "Right Ventricle (RV), Left Atrium (LA), and Right Atrium (RA) in real-time planar sector view.\n"
+                "- **Ventricular Morphology & Contractility:** Both left and right ventricular chambers demonstrate rhythmic "
+                "systolic contraction. Symmetric circumferential wall motion is visible along the interventricular septum and LV lateral wall.\n"
+                "- **Atrial Features & Echocontrast:** Dilated atrial chambers. Characteristic swirling, dynamic echogenic pattern "
+                "(spontaneous echo contrast / 'smoke') is observed within the left atrium, indicating regional low-velocity blood flow.\n\n"
+                "**2. Valvular Kinematics:**\n"
+                "- **Mitral Valve:** Anterior and posterior mitral leaflets display dynamic opening during diastole with coaptation during systole.\n"
+                "- **Tricuspid Valve:** Leaflet excursion into the RV is visualized with intact septal leaflet hinge.\n\n"
+                "**3. Educational & Surgical Research Context:**\n"
+                "- Dynamic cardiac ultrasound video processing is a core benchmark for video temporal transformer models, automated "
+                "ejection fraction (EF) estimation, and frame-by-frame myocardial boundary segmentation."
+            )
+            elements = [
+                "Left Ventricle (LV)",
+                "Right Ventricle (RV)",
+                "Left Atrium (LA)",
+                "Right Atrium (RA)",
+                "Mitral & Tricuspid Valves",
+                "Spontaneous Echo Contrast",
+            ]
+        else:
+            text = (
+                "### 🔍 Structured Radiological Observation (CXR Default View)\n\n"
+                "**1. Observable Pulmonary Parenchymal Features:**\n"
+                "- **Micronodular Distribution:** Bilateral, symmetric, diffuse micronodular interstitial opacities "
+                "uniformly distributed throughout both the upper, middle, and lower lung zones (classical 'miliary' pattern).\n"
+                "- **Nodule Size & Morphology:** Discrete, well-circumscribed, non-calcified nodules measuring approximately "
+                "1-2 mm in diameter, without evidence of cavitation, large confluent consolidation, or pneumothorax.\n"
+                "- **Pleural & Diaphragmatic Contours:** Costophrenic angles are well preserved with sharp sulci. "
+                "Diaphragmatic domes are smooth without blunting or elevation.\n\n"
+                "**2. Mediastinal & Osseous Findings:**\n"
+                "- **Cardiothoracic Ratio:** Normal transverse cardiac silhouette within expected limits (<0.50).\n"
+                "- **Trachea & Hilum:** Trachea is midline. Hilar shadows appear symmetrical without overt gross bulky adenopathy.\n"
+                "- **Bony Thorax:** Visualized clavicles, ribs, and vertebral elements show intact cortical outlines without lytic or blastic lesions.\n\n"
+                "**3. Educational & Surgical Research Context:**\n"
+                "- Standard clinical benchmark for radiological pattern classification and automated visual inspection."
+            )
+            elements = [
+                "Bilateral Diffuse Micronodules",
+                "Lung Parenchyma",
+                "Midline Trachea",
+                "Sharp Costophrenic Angles",
+                "Intact Bony Thorax",
+            ]
 
         return MultimodalInquiryResponse(
             text=text,
@@ -755,47 +1032,59 @@ class AppService:
         from google import genai
         from google.genai import types
 
-        # Resolve image bytes
-        image_bytes: Optional[bytes] = None
-        mime_type = req.image_mime_type or "image/png"
+        # Resolve media bytes (video or image)
+        media_bytes: Optional[bytes] = None
+        mime_type = req.video_mime_type if req.video_base64 or req.preset_video_id else req.image_mime_type
 
-        if req.image_base64:
+        # 1. Video priority if video fields provided
+        if req.video_base64:
+            b64_str = req.video_base64
+            if "," in b64_str:
+                b64_str = b64_str.split(",", 1)[1]
+            media_bytes = base64.b64decode(b64_str)
+            mime_type = req.video_mime_type or "video/mp4"
+        elif req.preset_video_id:
+            media_bytes = self.get_preset_video_bytes(req.preset_video_id)
+            for v in PRESET_VIDEOS:
+                if v.id == req.preset_video_id:
+                    guessed_mime, _ = mimetypes.guess_type(v.filename)
+                    if guessed_mime:
+                        mime_type = guessed_mime
+            if not mime_type:
+                mime_type = "video/mp4"
+        # 2. Image fields
+        elif req.image_base64:
             b64_str = req.image_base64
             if "," in b64_str:
                 b64_str = b64_str.split(",", 1)[1]
-            image_bytes = base64.b64decode(b64_str)
+            media_bytes = base64.b64decode(b64_str)
         elif req.preset_image_id:
-            image_bytes = self.get_preset_image_bytes(req.preset_image_id)
+            media_bytes = self.get_preset_image_bytes(req.preset_image_id)
+            for p in PRESET_IMAGES:
+                if p.id == req.preset_image_id:
+                    guessed_mime, _ = mimetypes.guess_type(p.filename)
+                    if guessed_mime:
+                        mime_type = guessed_mime
         elif DEFAULT_IMAGE_PATH.exists():
-            image_bytes = DEFAULT_IMAGE_PATH.read_bytes()
+            media_bytes = DEFAULT_IMAGE_PATH.read_bytes()
+            guessed_mime, _ = mimetypes.guess_type(DEFAULT_IMAGE_PATH.name)
+            if guessed_mime:
+                mime_type = guessed_mime
 
-        if not image_bytes:
-            raise ValueError("No valid image data provided for multimodal query.")
+        if not mime_type:
+            mime_type = "image/jpeg"
 
-        # Client kwargs
-        client_kwargs: Dict[str, Any] = {}
-        api_key = os.environ.get("GOOGLE_API_KEY")
-        project = os.environ.get("GOOGLE_CLOUD_PROJECT")
-        location = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get(
-            "GOOGLE_CLOUD_REGION", "us"
-        )
+        if not media_bytes:
+            raise ValueError("No valid image or video data provided for multimodal query.")
 
-        if api_key:
-            client_kwargs["api_key"] = api_key
-        else:
-            client_kwargs["vertexai"] = True
-            client_kwargs["location"] = location
-            if project:
-                client_kwargs["project"] = project
+        client = self._get_genai_client()
 
-        client = genai.Client(**client_kwargs)
-
-        # Image part
-        image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+        # Wrap media part
+        media_part = types.Part.from_bytes(data=media_bytes, mime_type=mime_type)
 
         system_instruction = (
             "You are an educational surgical research AI assistant. Provide objective, "
-            "anatomical and technical observations of surgical imagery and diagrams. "
+            "anatomical and technical observations of medical imagery, video clips, and diagrams. "
             "Do not provide individualized medical diagnosis, clinical decisions, or patient advice."
         )
 
@@ -813,11 +1102,34 @@ class AppService:
 
         config = types.GenerateContentConfig(**config_kwargs)
 
-        response = client.models.generate_content(
-            model=req.model,
-            contents=[image_part, req.prompt],
-            config=config,
-        )
+        try:
+            response = client.models.generate_content(
+                model=req.model,
+                contents=[media_part, req.prompt],
+                config=config,
+            )
+        except Exception as err:
+            err_msg = str(err)
+            # If regional endpoint returned NOT_FOUND for publisher model, retry with us-central1
+            if ("404" in err_msg or "NOT_FOUND" in err_msg or "not found" in err_msg.lower()) and not (
+                os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+            ):
+                from google import genai
+
+                fallback_client = genai.Client(
+                    vertexai=True,
+                    project=client._api_client.project
+                    if hasattr(client, "_api_client") and hasattr(client._api_client, "project")
+                    else os.environ.get("GOOGLE_CLOUD_PROJECT", "enes-turan-demo"),
+                    location="us-central1",
+                )
+                response = fallback_client.models.generate_content(
+                    model=req.model,
+                    contents=[media_part, req.prompt],
+                    config=config,
+                )
+            else:
+                raise err
 
         elapsed = (time.time() - start_time) * 1000
         text_output = response.text or "No text generated."
@@ -2260,26 +2572,32 @@ class AppService:
         """Call Gemini model directly without tools or agent scaffolding."""
         from google import genai
 
-        api_key = os.environ.get("GOOGLE_API_KEY")
-        project = os.environ.get("GOOGLE_CLOUD_PROJECT")
-        location = os.environ.get("GOOGLE_CLOUD_LOCATION") or os.environ.get(
-            "GOOGLE_CLOUD_REGION", "us"
-        )
+        client = self._get_genai_client()
+        try:
+            resp = client.models.generate_content(
+                model=req.model,
+                contents=req.question,
+            )
+        except Exception as err:
+            err_msg = str(err)
+            if ("404" in err_msg or "NOT_FOUND" in err_msg or "not found" in err_msg.lower()) and not (
+                os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
+            ):
+                from google import genai
 
-        client_kwargs: Dict[str, Any] = {}
-        if api_key:
-            client_kwargs["api_key"] = api_key
-        else:
-            client_kwargs["vertexai"] = True
-            client_kwargs["location"] = location
-            if project:
-                client_kwargs["project"] = project
-
-        client = genai.Client(**client_kwargs)
-        resp = client.models.generate_content(
-            model=req.model,
-            contents=req.question,
-        )
+                fallback_client = genai.Client(
+                    vertexai=True,
+                    project=client._api_client.project
+                    if hasattr(client, "_api_client") and hasattr(client._api_client, "project")
+                    else os.environ.get("GOOGLE_CLOUD_PROJECT", "enes-turan-demo"),
+                    location="us-central1",
+                )
+                resp = fallback_client.models.generate_content(
+                    model=req.model,
+                    contents=req.question,
+                )
+            else:
+                raise err
 
         elapsed = (time.time() - start_time) * 1000
         text = resp.text or "No text generated."

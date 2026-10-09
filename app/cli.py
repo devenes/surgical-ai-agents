@@ -128,41 +128,47 @@ def run_rehearsal() -> None:
     print("-" * 75)
 
     # 1. Asset Verification
-    print("\n[Step 1/6] Verifying local schemas and multimodal image assets...")
+    print("\n[Step 1/6] Verifying local schemas and multimodal clinical assets...")
     assert COORDINATOR_SCHEMA_PATH.exists(), (
         f"Missing coordinator schema: {COORDINATOR_SCHEMA_PATH}"
     )
     with open(COORDINATOR_SCHEMA_PATH, "r", encoding="utf-8") as f:
         coordinator_schema = json.load(f)
 
-    sample_img = DEMO_ASSET_DIR / "laparoscopic_cvs_schematic.png"
+    sample_img = DEMO_ASSET_DIR / "miliary-tuberculosis-5.jpeg"
+    sample_vid = DEMO_ASSET_DIR / "apical_4_chamber_echo.mp4"
     assert sample_img.exists(), f"Missing multimodal demo asset: {sample_img}"
+    assert sample_vid.exists(), f"Missing multimodal demo asset: {sample_vid}"
     print(f"  ✓ Coordinator JSON Schema verified: {COORDINATOR_SCHEMA_PATH.name}")
     print(
-        f"  ✓ Laparoscopic CVS image asset verified: {sample_img.name} ({sample_img.stat().st_size} bytes)"
+        f"  ✓ Clinical Chest Radiograph asset verified: {sample_img.name} ({sample_img.stat().st_size} bytes)"
+    )
+    print(
+        f"  ✓ Echocardiogram Video asset verified: {sample_vid.name} ({sample_vid.stat().st_size} bytes)"
     )
 
     # 2. Multimodal Studio Offline Verification
-    print("\n[Step 2/6] Verifying Multimodal Vision Studio in zero-token offline mode...")
+    print("\n[Step 2/6] Verifying Multimodal Vision & Video Studio in zero-token offline mode...")
     service = AppService(force_mock=True)
     mm_req = MultimodalInquiryRequest(
-        prompt="Describe observable anatomical features of the Critical View of Safety.",
-        preset_image_id="lap_cvs_schematic",
+        prompt="Describe observable anatomical and radiological features in this chest radiograph.",
+        preset_image_id="cxr_miliary_tb",
         mock_mode=True,
     )
     mm_resp = service.execute_multimodal(mm_req)
     assert mm_resp.text and len(mm_resp.text) > 50, "Multimodal response empty"
     assert (
-        "Calot" in mm_resp.text
-        or "Critical View of Safety" in mm_resp.text
-        or "cystic" in mm_resp.text.lower()
-    ), "Multimodal response missing CVS concepts"
+        "miliary" in mm_resp.text.lower()
+        or "radiological" in mm_resp.text.lower()
+        or "micronodular" in mm_resp.text.lower()
+    ), "Multimodal response missing radiograph concepts"
     assert (
         "educational" in mm_resp.safety_disclaimer.lower()
         or "not designed" in mm_resp.safety_disclaimer.lower()
+        or "research" in mm_resp.safety_disclaimer.lower()
     ), "Missing safety disclaimer"
     print(f"  ✓ Offline Multimodal Analysis generated in {mm_resp.latency_ms:.1f}ms (Tokens: 0)")
-    print("  ✓ Anatomical landmark description & educational boundaries confirmed")
+    print("  ✓ Radiological feature description & educational boundaries confirmed")
 
     # 3. Multi-Agent Consensus on All 16 Benchmark Cases
     print(

@@ -25,7 +25,7 @@
 ### Dakika 26:00 – 27:30: Aşama 1 — Nötr Görsel Gözlem
 - **Sunucu Eylemleri**:
   1. **Attach Image** simgesine (+ veya ataç) tıklayın.
-  2. `multimodal-demo/assets/laparoscopic_cvs_schematic.png` dosyasını seçin.
+  2. `multimodal-demo/assets/miliary-tuberculosis-5.jpeg` dosyasını seçin.
   3. `multimodal-demo/prompt.md` içindeki Prompt 1'i yapıştırın:
      ```text
      Describe only the observable visual features in this image. Do not diagnose disease, identify a patient, recommend treatment, or infer a clinical decision.

@@ -36,6 +36,18 @@ class MultimodalInquiryRequest(BaseModel):
         None,
         description="Optional ID of a bundled preset image",
     )
+    video_base64: Optional[str] = Field(
+        None,
+        description="Base64-encoded video data",
+    )
+    video_mime_type: str = Field(
+        "video/mp4",
+        description="MIME type of the video (e.g., video/mp4)",
+    )
+    preset_video_id: Optional[str] = Field(
+        None,
+        description="Optional ID of a bundled preset video",
+    )
     model: str = Field(
         "gemini-2.5-flash",
         description="Model ID to invoke",
@@ -180,6 +192,17 @@ class PresetImage(BaseModel):
     title: str
     filename: str
     description: str
+    suggested_prompts: List[str]
+
+
+class PresetVideo(BaseModel):
+    """Pre-bundled medical video for video-language multimodal demonstration."""
+
+    id: str
+    title: str
+    filename: str
+    description: str
+    duration_sec: Optional[float] = None
     suggested_prompts: List[str]
 
 

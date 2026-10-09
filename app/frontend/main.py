@@ -6,8 +6,9 @@ orchestration pipeline with token-optimized offline mode and interactive tabs.
 
 import base64
 import io
+import mimetypes
 import os
-from typing import Optional
+from typing import Any, Optional
 import httpx
 from PIL import Image
 import streamlit as st
@@ -52,6 +53,7 @@ def get_local_service() -> AppService:
 local_service = get_local_service()
 models = local_service.get_models()
 preset_questions, preset_images = local_service.get_presets()
+preset_videos = local_service.get_preset_videos()
 
 # Sidebar Controls
 params = render_sidebar_controls(models)
@@ -148,11 +150,12 @@ with badge_col4:
 # =============================================================================
 # Application Tabs
 # =============================================================================
-tab_compare, tab_multiagent, tab_vision, tab_picot, tab_specialist, tab_diagnostics = st.tabs(
+tab_compare, tab_multiagent, tab_vision, tab_video, tab_picot, tab_specialist, tab_diagnostics = st.tabs(
     [
         "⚖️ Benchmark: With vs. Without Agents",
         "🤖 Multi-Agent Consensus Studio",
         "👁️ Multimodal Vision Studio",
+        "🎥 Multimodal Video Studio",
         "⚡ PICOT Query Decomposer",
         "📚 Specialist Deep-Dive",
         "⚙️ API & Diagnostics",
@@ -268,10 +271,10 @@ with tab_compare:
 # TAB 3: Multimodal Vision Studio
 # -----------------------------------------------------------------------------
 with tab_vision:
-    st.subheader("🖼️ Surgical & Anatomical Vision Inspection")
+    st.subheader("🖼️ Surgical & Radiological Vision Inspection")
     st.markdown(
-        "Demonstrates multimodal vision-language understanding. Upload surgical imagery "
-        "or inspect pre-bundled schematics (such as the *Critical View of Safety* in laparoscopic cholecystectomy)."
+        "Demonstrates multimodal vision-language understanding. Inspect pre-bundled clinical radiographs "
+        "(Chest X-rays, joint/bone radiographs, surgical schematics) or upload your own custom medical imagery."
     )
 
     vis_left, vis_right = st.columns([1, 1])
@@ -280,35 +283,42 @@ with tab_vision:
         st.markdown("#### 1. Image Source")
         image_source = st.radio(
             "Select Image Source:",
-            ["Preset Surgical Schematic", "Upload Custom Image"],
+            ["Preset Clinical Imagery & Schematics", "Upload Custom Image"],
             horizontal=True,
             key="vis_img_source",
         )
 
         image_bytes: Optional[bytes] = None
-        image_filename = "preset_schematic.png"
-        image_mime = "image/png"
+        image_filename = "radiograph.jpeg"
+        image_mime = "image/jpeg"
+        active_preset_id: Optional[str] = None
+        preset_obj: Optional[Any] = None
 
-        if image_source == "Preset Surgical Schematic":
+        if image_source == "Preset Clinical Imagery & Schematics":
             preset_options = {p.id: f"{p.title} ({p.filename})" for p in preset_images}
             selected_preset_id = st.selectbox(
-                "Choose Preset Schematic:",
+                "Choose Preset Image:",
                 options=list(preset_options.keys()),
                 format_func=lambda x: preset_options[x],
+                key="vis_preset_select",
             )
             image_bytes = local_service.get_preset_image_bytes(selected_preset_id)
             preset_obj = next(p for p in preset_images if p.id == selected_preset_id)
+            active_preset_id = selected_preset_id
+            image_filename = preset_obj.filename
+            guessed_mime, _ = mimetypes.guess_type(preset_obj.filename)
+            image_mime = guessed_mime or "image/jpeg"
             st.caption(f"📝 {preset_obj.description}")
         else:
             uploaded_file = st.file_uploader(
-                "Upload Surgical Image (PNG, JPG, WEBP):",
+                "Upload Medical / Surgical Image (PNG, JPG, WEBP):",
                 type=["png", "jpg", "jpeg", "webp"],
                 key="vis_file_uploader",
             )
             if uploaded_file is not None:
                 image_bytes = uploaded_file.getvalue()
                 image_filename = uploaded_file.name
-                image_mime = uploaded_file.type or "image/png"
+                image_mime = uploaded_file.type or "image/jpeg"
 
         if image_bytes:
             pil_img = Image.open(io.BytesIO(image_bytes))
@@ -321,13 +331,15 @@ with tab_vision:
     with vis_right:
         st.markdown("#### 2. Prompt & Inquiry")
 
-        # Quick prompt selector
-        quick_prompts = [
-            "Describe only the observable visual anatomical and operative features in this image.",
-            "Identify the 3 criteria of the Critical View of Safety (CVS) depicted here.",
-            "Explain what computer-vision research tasks could use this visual information.",
-            "Custom User Prompt...",
-        ]
+        # Dynamic prompts based on selected preset image
+        if preset_obj and getattr(preset_obj, "suggested_prompts", None):
+            quick_prompts = list(preset_obj.suggested_prompts) + ["Custom User Prompt..."]
+        else:
+            quick_prompts = [
+                "Describe only the observable visual anatomical and radiological features in this image.",
+                "Detail the key findings, margins, alignment, and technical aspects visible.",
+                "Custom User Prompt...",
+            ]
 
         selected_prompt_template = st.selectbox(
             "Quick Prompt Presets:",
@@ -337,7 +349,7 @@ with tab_vision:
         )
 
         if selected_prompt_template == "Custom User Prompt...":
-            default_prompt_text = "What anatomical structures and surgical planes are visible?"
+            default_prompt_text = "What anatomical structures and radiological findings are visible?"
         else:
             default_prompt_text = selected_prompt_template
 
@@ -365,6 +377,7 @@ with tab_vision:
                     prompt=user_prompt,
                     image_base64=base64.b64encode(image_bytes).decode("utf-8"),
                     image_mime_type=image_mime,
+                    preset_image_id=active_preset_id,
                     model=params["model_id"],
                     temperature=params["temperature"],
                     top_p=params["top_p"],
@@ -404,6 +417,157 @@ with tab_vision:
 
             with resp_tab3:
                 st.json(vis_resp.model_dump())
+
+
+# -----------------------------------------------------------------------------
+# TAB: Multimodal Video Studio
+# -----------------------------------------------------------------------------
+with tab_video:
+    st.subheader("🎥 Dynamic Surgical & Diagnostic Video Studio")
+    st.markdown(
+        "Demonstrates multimodal video-language understanding on sequential temporal clinical recordings. "
+        "Inspect pre-bundled clinical ultrasound videos (e.g., *Apical 4-Chamber Echocardiogram*) "
+        "or upload custom medical video clips (MP4, WEBM, MOV) to evaluate dynamic chamber contractility, "
+        "wall motion, valve excursion, and operative flow."
+    )
+
+    vid_left, vid_right = st.columns([1, 1])
+
+    with vid_left:
+        st.markdown("#### 1. Video Source")
+        video_source = st.radio(
+            "Select Video Source:",
+            ["Preset Clinical Video (Echo / Ultrasound)", "Upload Custom Video"],
+            horizontal=True,
+            key="vid_source_radio",
+        )
+
+        video_bytes: Optional[bytes] = None
+        video_filename = "apical_4_chamber_echo.mp4"
+        video_mime = "video/mp4"
+        active_video_id: Optional[str] = None
+        preset_vid_obj: Optional[Any] = None
+
+        if video_source == "Preset Clinical Video (Echo / Ultrasound)":
+            preset_vid_options = {v.id: f"{v.title} ({v.filename})" for v in preset_videos}
+            selected_vid_id = st.selectbox(
+                "Choose Preset Video:",
+                options=list(preset_vid_options.keys()),
+                format_func=lambda x: preset_vid_options[x],
+                key="vid_preset_select",
+            )
+            video_bytes = local_service.get_preset_video_bytes(selected_vid_id)
+            preset_vid_obj = next(v for v in preset_videos if v.id == selected_vid_id)
+            active_video_id = selected_vid_id
+            video_filename = preset_vid_obj.filename
+            guessed_mime, _ = mimetypes.guess_type(preset_vid_obj.filename)
+            video_mime = guessed_mime or "video/mp4"
+            st.caption(f"📝 {preset_vid_obj.description}")
+        else:
+            uploaded_vid = st.file_uploader(
+                "Upload Medical Video Clip (MP4, WEBM, MOV - max 20MB):",
+                type=["mp4", "webm", "mov"],
+                key="vid_file_uploader",
+            )
+            if uploaded_vid is not None:
+                video_bytes = uploaded_vid.getvalue()
+                video_filename = uploaded_vid.name
+                video_mime = uploaded_vid.type or "video/mp4"
+
+        if video_bytes:
+            st.video(video_bytes, format=video_mime)
+            st.caption(
+                f"🎬 Clip: `{video_filename}` ({len(video_bytes) / 1024:.1f} KB, format: `{video_mime}`)"
+            )
+
+    with vid_right:
+        st.markdown("#### 2. Temporal Prompt & Inquiry")
+
+        if preset_vid_obj and getattr(preset_vid_obj, "suggested_prompts", None):
+            quick_vid_prompts = list(preset_vid_obj.suggested_prompts) + ["Custom User Prompt..."]
+        else:
+            quick_vid_prompts = [
+                "Describe the observable cardiac structures and dynamic wall motion in this echocardiogram video clip.",
+                "Evaluate the contraction and symmetry of the left ventricle vs right ventricle across the cardiac cycle.",
+                "Custom User Prompt...",
+            ]
+
+        selected_vid_prompt = st.selectbox(
+            "Quick Video Prompt Presets:",
+            options=quick_vid_prompts,
+            index=0,
+            key="vid_prompt_select",
+        )
+
+        if selected_vid_prompt == "Custom User Prompt...":
+            default_vid_text = "What dynamic anatomical movements and wall motion patterns are observable in this clip?"
+        else:
+            default_vid_text = selected_vid_prompt
+
+        user_vid_prompt = st.text_area(
+            "Temporal Inquiry Prompt:",
+            value=default_vid_text,
+            height=130,
+            key="vid_user_prompt",
+        )
+
+        st.caption("🔒 Safety: Video analysis is strictly for education/research; non-diagnostic.")
+
+        run_video_btn = st.button(
+            "🚀 Run Video Multimodal Analysis", type="primary", use_container_width=True, key="run_video_btn"
+        )
+
+    if run_video_btn:
+        if not video_bytes:
+            st.error("Please provide or select a video clip first.")
+        else:
+            with st.spinner(
+                f"Analyzing video temporal frames using {params['model_info'].display_name}..."
+            ):
+                req = MultimodalInquiryRequest(
+                    prompt=user_vid_prompt,
+                    video_base64=base64.b64encode(video_bytes).decode("utf-8"),
+                    video_mime_type=video_mime,
+                    preset_video_id=active_video_id,
+                    model=params["model_id"],
+                    temperature=params["temperature"],
+                    top_p=params["top_p"],
+                    max_output_tokens=params["max_output_tokens"],
+                    thinking_budget=params["thinking_budget"],
+                    mock_mode=params["mock_mode"],
+                )
+                vid_resp = run_multimodal(req)
+
+            st.divider()
+            v_tab1, v_tab2, v_tab3 = st.tabs(
+                ["📝 Temporal Observation & Analysis", "⚙️ Generation Parameters", "📦 Raw JSON Payload"]
+            )
+
+            with v_tab1:
+                st.markdown(vid_resp.text)
+                if vid_resp.visual_elements_detected:
+                    st.markdown("**Detected Dynamic Anatomical Structures:**")
+                    st.write(", ".join([f"`{el}`" for el in vid_resp.visual_elements_detected]))
+                st.caption(
+                    f"⏱️ Latency: **{vid_resp.latency_ms:.1f} ms** | Model: **{vid_resp.model}**"
+                )
+
+            with v_tab2:
+                st.markdown(
+                    f"""
+                    - **Model ID:** `{vid_resp.model}`
+                    - **Latency:** `{vid_resp.latency_ms} ms`
+                    - **Estimated Tokens:** `{vid_resp.token_estimate}`
+                    - **Temperature:** `{params["temperature"]}`
+                    - **Top-P:** `{params["top_p"]}`
+                    - **Max Tokens:** `{params["max_output_tokens"]}`
+                    - **Thinking Budget:** `{params["thinking_budget"]}`
+                    """
+                )
+                st.code(user_vid_prompt, language="markdown")
+
+            with v_tab3:
+                st.json(vid_resp.model_dump())
 
 
 # -----------------------------------------------------------------------------
