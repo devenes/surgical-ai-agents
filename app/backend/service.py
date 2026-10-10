@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from app.backend.schemas import (
     ComparativeAnalysisRequest,
     ComparativeAnalysisResponse,
@@ -28,6 +26,9 @@ from app.backend.schemas import (
     PresetVideo,
     SubAgentExecutionStep,
 )
+
+load_dotenv()
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEMO_ASSET_DIR = REPO_ROOT / "multimodal-demo" / "assets"

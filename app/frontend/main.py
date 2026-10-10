@@ -2,6 +2,7 @@
 
 Supports multimodal image understanding and a 2-subagent (Evidence & Guideline)
 orchestration pipeline with token-optimized offline mode and interactive tabs.
+Localized for English (en) and Türkçe (tr).
 """
 
 import base64
@@ -34,10 +35,19 @@ from app.frontend.components import (
     render_execution_timeline,
     render_sidebar_controls,
 )
+from app.frontend.i18n import (
+    apply_language_directive,
+    get_locale,
+    get_localized_preset_image,
+    get_localized_preset_inquiry,
+    get_localized_preset_video,
+    get_preset_question_for_locale,
+    t,
+)
 
 # Page configuration
 st.set_page_config(
-    page_title="Surgical AI Studio | Multimodal & Multi-Agent",
+    page_title=t("app.page_title"),
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -55,8 +65,10 @@ models = local_service.get_models()
 preset_questions, preset_images = local_service.get_presets()
 preset_videos = local_service.get_preset_videos()
 
-# Sidebar Controls
+# Sidebar Controls (includes persistent language selector)
 params = render_sidebar_controls(models)
+current_locale = get_locale()
+prev_locale = st.session_state.get("_last_locale", "en")
 
 
 # Helper: Execute multimodal via REST or direct service
@@ -71,7 +83,7 @@ def run_multimodal(req: MultimodalInquiryRequest) -> MultimodalInquiryResponse:
                 resp.raise_for_status()
                 return MultimodalInquiryResponse.model_validate(resp.json())
         except Exception as e:
-            st.warning(f"⚠️ FastAPI REST request failed ({e}). Falling back to in-process service.")
+            st.warning(t("warnings.fastapi_fallback", e=e))
     return local_service.execute_multimodal(req)
 
 
@@ -87,7 +99,7 @@ def run_multiagent(req: MultiAgentConsensusRequest) -> MultiAgentConsensusRespon
                 resp.raise_for_status()
                 return MultiAgentConsensusResponse.model_validate(resp.json())
         except Exception as e:
-            st.warning(f"⚠️ FastAPI REST request failed ({e}). Falling back to in-process service.")
+            st.warning(t("warnings.fastapi_fallback", e=e))
     return local_service.execute_multiagent_consensus(req)
 
 
@@ -103,7 +115,7 @@ def run_comparative_analysis(req: ComparativeAnalysisRequest) -> ComparativeAnal
                 resp.raise_for_status()
                 return ComparativeAnalysisResponse.model_validate(resp.json())
         except Exception as e:
-            st.warning(f"⚠️ FastAPI REST request failed ({e}). Falling back to in-process service.")
+            st.warning(t("warnings.fastapi_fallback", e=e))
     return local_service.execute_comparative_analysis(req)
 
 
@@ -119,25 +131,27 @@ def run_monolithic_direct(req: MonolithicDirectRequest) -> MonolithicDirectRespo
                 resp.raise_for_status()
                 return MonolithicDirectResponse.model_validate(resp.json())
         except Exception as e:
-            st.warning(f"⚠️ FastAPI REST request failed ({e}). Falling back to in-process service.")
+            st.warning(t("warnings.fastapi_fallback", e=e))
     return local_service.execute_monolithic_direct(req)
 
 
 # =============================================================================
 # Main Header
 # =============================================================================
-st.header("🩺 Surgical AI Studio: Multimodal & Multi-Agent Research", divider="rainbow")
-mode_text = "⚡ Zero-Token Offline" if params["mock_mode"] else "🌐 Live Vertex AI"
+st.header(t("header.title"), divider="rainbow")
+mode_text = t("header.offline_mode") if params["mock_mode"] else t("header.live_mode")
 agents_count = int(params["enable_evidence"]) + int(params["enable_guideline"])
 thinking_desc = params.get("thinking_level") or (
-    f"{params['thinking_budget']} tokens" if params.get("thinking_budget") is not None else "Default"
+    t("header.tokens_unit", budget=params["thinking_budget"])
+    if params.get("thinking_budget") is not None
+    else t("header.default_value")
 )
 st.caption(
-    f"🧠 **Model:** `{params['model_info'].display_name}` &nbsp;•&nbsp; "
-    f"💭 **Thinking:** `{thinking_desc}` &nbsp;•&nbsp; "
-    f"🔌 **Mode:** `{mode_text}` &nbsp;•&nbsp; "
-    f"🤖 **Sub-Agents:** `{agents_count} Active` &nbsp;•&nbsp; "
-    f"⚙️ **Backend:** `{params['connection_mode']}`"
+    f"🧠 **{t('header.model')}:** `{params['model_info'].display_name}` &nbsp;•&nbsp; "
+    f"💭 **{t('header.thinking')}:** `{thinking_desc}` &nbsp;•&nbsp; "
+    f"🔌 **{t('header.mode')}:** `{mode_text}` &nbsp;•&nbsp; "
+    f"🤖 **{t('header.subagents')}:** `{t('header.active_count', count=agents_count)}` &nbsp;•&nbsp; "
+    f"⚙️ **{t('header.backend')}:** `{params['connection_mode']}`"
 )
 
 
@@ -146,9 +160,9 @@ st.caption(
 # =============================================================================
 tab_research, tab_multimodal, tab_diagnostics = st.tabs(
     [
-        "🔬 Clinical Research & Consensus",
-        "🖼️ Multimodal Vision & Video",
-        "⚙️ API & Diagnostics",
+        t("tabs.research"),
+        t("tabs.multimodal"),
+        t("tabs.diagnostics"),
     ]
 )
 
@@ -157,43 +171,59 @@ tab_research, tab_multimodal, tab_diagnostics = st.tabs(
 # TAB 1: Clinical Research & Consensus
 # -----------------------------------------------------------------------------
 with tab_research:
+    research_mode_keys = [
+        "multi_agent_consensus",
+        "benchmark_audit",
+        "picot_decomposer",
+        "specialist_deep_dive",
+    ]
     research_mode = st.segmented_control(
         "Research Workflow:",
-        options=[
-            "🤖 Multi-Agent Consensus",
-            "⚖️ Benchmark Audit (With vs. Without Agents)",
-            "⚡ PICOT Query Decomposer",
-            "📚 Specialist Deep-Dive",
-        ],
-        default="🤖 Multi-Agent Consensus",
+        options=research_mode_keys,
+        format_func=lambda m: t(f"research.modes.{m}"),
+        default="multi_agent_consensus",
         label_visibility="collapsed",
     )
 
     # 1. Primary Multi-Agent Consensus Mode
-    if research_mode == "🤖 Multi-Agent Consensus":
-        st.subheader("🤖 Multi-Agent Consensus Architecture")
-        st.caption(
-            "Orchestrates a **Coordinator Agent** delegating research in parallel to two specialized sub-agents:\n"
-            "• **Evidence Specialist:** Peer-reviewed randomized trials (PubMed)\n"
-            "• **Guideline Specialist:** Clinical practice guidelines from major surgical societies (ASCRS, ERAS, SAGES)\n"
-            "• **Coordinator Synthesis:** Normalizes into PICOT, reconciles agreements/divergences, and generates consensus matrix."
-        )
+    if research_mode == "multi_agent_consensus":
+        st.subheader(t("research.consensus.subheader"))
+        st.caption(t("research.consensus.caption"))
 
-        preset_titles = {p.id: f"{p.title} ({p.category})" for p in preset_questions}
+        preset_q_ids = [p.id for p in preset_questions]
+
+        def format_preset_qid(qid: str) -> str:
+            raw_p = next(p for p in preset_questions if p.id == qid)
+            loc_p = get_localized_preset_inquiry(raw_p, current_locale)
+            return f"{loc_p.title} ({loc_p.category})"
+
         selected_preset_qid = st.selectbox(
-            "Choose Preset Surgical Topic or Customize Below:",
-            options=list(preset_titles.keys()),
-            format_func=lambda x: preset_titles[x],
+            t("research.consensus.preset_label"),
+            options=preset_q_ids,
+            format_func=format_preset_qid,
             key="ma_preset_select",
         )
 
-        active_preset = next(p for p in preset_questions if p.id == selected_preset_qid)
+        raw_active_preset = next(p for p in preset_questions if p.id == selected_preset_qid)
+        active_preset = get_localized_preset_inquiry(raw_active_preset, current_locale)
         st.caption(
-            f"{get_case_type_badge(active_preset.case_type)} — *{active_preset.pedagogical_lesson}*"
+            f"{get_case_type_badge(raw_active_preset.case_type)} — *{active_preset.pedagogical_lesson}*"
         )
 
+        # Smart prompt management: preserve user edits, update on preset or locale switch if unedited
+        prev_qid = st.session_state.get("_last_ma_preset_id", selected_preset_qid)
+        if selected_preset_qid != prev_qid:
+            st.session_state["ma_question_input"] = active_preset.question
+            st.session_state["_last_ma_preset_id"] = selected_preset_qid
+        elif current_locale != prev_locale:
+            prev_question = get_preset_question_for_locale(
+                selected_preset_qid, prev_locale, raw_active_preset.question
+            )
+            if st.session_state.get("ma_question_input", "") == prev_question:
+                st.session_state["ma_question_input"] = active_preset.question
+
         research_question = st.text_area(
-            "Clinical Research Question:",
+            t("research.consensus.question_label"),
             value=active_preset.question,
             height=90,
             key="ma_question_input",
@@ -202,23 +232,24 @@ with tab_research:
         col_btn, col_info = st.columns([1, 2])
         with col_btn:
             run_consensus_btn = st.button(
-                "🚀 Execute Multi-Agent Consensus", type="primary", width="stretch"
+                t("research.consensus.run_button"), type="primary", width="stretch"
             )
         with col_info:
             active_subagents = []
             if params["enable_evidence"]:
-                active_subagents.append("📚 Evidence Specialist")
+                active_subagents.append(t("sidebar.evidence_specialist_label"))
             if params["enable_guideline"]:
-                active_subagents.append("📋 Guideline Specialist")
-            st.caption(f"Active Pipeline: Coordinator ➔ {' + '.join(active_subagents) or 'None'}")
+                active_subagents.append(t("sidebar.guideline_specialist_label"))
+            pipeline_text = " + ".join(active_subagents) or t("research.consensus.none")
+            st.caption(t("research.consensus.active_pipeline", pipeline=pipeline_text))
 
         if run_consensus_btn:
-            with st.status("Executing multi-agent research workflow...", expanded=True) as status:
-                st.write("1. Normalizing inquiry into clinical PICOT framework...")
-                st.write("2. Querying Evidence & Guideline specialists in parallel...")
-                st.write("3. Reconciling findings into consensus brief and discrepancy matrix...")
+            with st.status(t("research.consensus.status_executing"), expanded=True) as status:
+                st.write(t("research.consensus.status_step1"))
+                st.write(t("research.consensus.status_step2"))
+                st.write(t("research.consensus.status_step3"))
                 agent_req = MultiAgentConsensusRequest(
-                    question=research_question,
+                    question=apply_language_directive(research_question, current_locale),
                     model=params["model_id"],
                     enable_evidence_agent=params["enable_evidence"],
                     enable_guideline_agent=params["enable_guideline"],
@@ -228,7 +259,7 @@ with tab_research:
                 )
                 agent_resp = run_multiagent(agent_req)
                 status.update(
-                    label="Multi-Agent Consensus brief generated!",
+                    label=t("research.consensus.status_complete"),
                     state="complete",
                     expanded=False,
                 )
@@ -236,7 +267,7 @@ with tab_research:
             st.divider()
 
             # Executive Summary First: Immediate Clinical Bottom Line
-            st.markdown("### 📝 Master Evidence Brief")
+            st.markdown(t("research.consensus.brief_title"))
             st.markdown(agent_resp.final_synthesis)
             st.caption(f"ℹ️ {agent_resp.safety_disclaimer}")
 
@@ -245,10 +276,10 @@ with tab_research:
             # Structured Drill-Down Tabs
             res_tab1, res_tab2, res_tab3, res_tab4 = st.tabs(
                 [
-                    "📑 Specialist Findings (Side-by-Side)",
-                    "⚖️ Consensus & Discrepancies",
-                    "📌 Normalized PICOT & Citations",
-                    "⏱️ Execution Pipeline Trace",
+                    t("research.consensus.tabs.specialist"),
+                    t("research.consensus.tabs.consensus"),
+                    t("research.consensus.tabs.picot"),
+                    t("research.consensus.tabs.timeline"),
                 ]
             )
 
@@ -262,27 +293,27 @@ with tab_research:
                 render_consensus_matrix(agent_resp.consensus_matrix)
 
             with res_tab3:
-                st.markdown("#### 📌 Normalized PICOT Scope")
+                st.markdown(t("research.consensus.picot_scope_title"))
                 p_cols = st.columns(4)
                 with p_cols[0]:
                     st.markdown(
-                        f"**Population:**\n\n{agent_resp.normalized_picot.get('population', '')}"
+                        f"{t('research.consensus.population')}\n\n{agent_resp.normalized_picot.get('population', '')}"
                     )
                 with p_cols[1]:
                     st.markdown(
-                        f"**Intervention:**\n\n{agent_resp.normalized_picot.get('intervention', '')}"
+                        f"{t('research.consensus.intervention')}\n\n{agent_resp.normalized_picot.get('intervention', '')}"
                     )
                 with p_cols[2]:
                     st.markdown(
-                        f"**Comparator:**\n\n{agent_resp.normalized_picot.get('comparator', '')}"
+                        f"{t('research.consensus.comparator')}\n\n{agent_resp.normalized_picot.get('comparator', '')}"
                     )
                 with p_cols[3]:
                     st.markdown(
-                        f"**Outcomes:**\n\n{', '.join(agent_resp.normalized_picot.get('outcomes', []))}"
+                        f"{t('research.consensus.outcomes')}\n\n{', '.join(agent_resp.normalized_picot.get('outcomes', []))}"
                     )
 
                 if agent_resp.sources:
-                    st.markdown("#### 🔗 Verified Citations")
+                    st.markdown(t("research.consensus.verified_citations"))
                     for src in agent_resp.sources:
                         st.markdown(
                             f"- [{src.get('title')}]({src.get('url')}) `({src.get('type')})`"
@@ -292,53 +323,56 @@ with tab_research:
                 render_execution_timeline(agent_resp.execution_steps)
 
     # 2. Benchmark Audit Mode
-    elif research_mode == "⚖️ Benchmark Audit (With vs. Without Agents)":
-        st.subheader("⚖️ Empirical Benchmark: Monolithic Baseline vs. 2-Subagent Architecture")
-        st.markdown(
-            "Demonstrates why multi-agent specialization is essential for high-stakes surgical inquiries. "
-            "Direct zero-shot monolithic models frequently **hallucinate citations**, **conflate trials with guidelines**, "
-            "and **fail safety boundaries** by dispensing direct, unverified patient advice. "
-            "The **2-Subagent Architecture** grounds inquiries in verifiable PubMed RCTs and surgical society guidelines "
-            "while enforcing an automatic educational refusal gate."
-        )
+    elif research_mode == "benchmark_audit":
+        st.subheader(t("research.benchmark.subheader"))
+        st.markdown(t("research.benchmark.description"))
 
         preset_map = {p.id: p for p in preset_questions}
         case_choices = list(preset_map.keys())
 
         def format_case_choice(cid: str) -> str:
-            case = preset_map.get(cid)
-            if not case:
+            raw_case = preset_map.get(cid)
+            if not raw_case:
                 return cid
-            return f"[{case.id}] {case.title} ({case.category})"
+            loc_case = get_localized_preset_inquiry(raw_case, current_locale)
+            return f"[{loc_case.id}] {loc_case.title} ({loc_case.category})"
 
         c_sel1, c_sel2 = st.columns([2, 1])
         with c_sel1:
             selected_case_id = st.selectbox(
-                "Select Clinical Benchmark Case:",
+                t("research.benchmark.select_label"),
                 options=case_choices,
                 format_func=format_case_choice,
                 key="bench_case_select",
             )
         with c_sel2:
-            st.caption("Benchmark Category:")
-            active_bench_case = preset_map[selected_case_id]
-            st.markdown(f"**{get_case_type_badge(active_bench_case.case_type)}**")
+            st.caption(t("research.benchmark.category_label"))
+            raw_bench_case = preset_map[selected_case_id]
+            active_bench_case = get_localized_preset_inquiry(raw_bench_case, current_locale)
+            st.markdown(f"**{get_case_type_badge(raw_bench_case.case_type)}**")
 
-        with st.expander("💡 Case Pedagogical Context & Expected Flaws", expanded=True):
+        with st.expander(t("research.benchmark.expander_title"), expanded=True):
             p_c1, p_c2, p_c3 = st.columns(3)
             with p_c1:
-                st.info(f"💡 **Pedagogical Lesson**\n\n{active_bench_case.pedagogical_lesson}")
+                st.info(f"{t('research.benchmark.lesson_title')}\n\n{active_bench_case.pedagogical_lesson}")
             with p_c2:
-                st.error(
-                    f"❌ **Expected Monolithic Flaw**\n\n{active_bench_case.expected_without_agent_flaw}"
-                )
+                st.error(f"{t('research.benchmark.flaw_title')}\n\n{active_bench_case.expected_without_agent_flaw}")
             with p_c3:
-                st.success(
-                    f"🛡️ **Multi-Agent Benefit**\n\n{active_bench_case.expected_with_agent_benefit}"
-                )
+                st.success(f"{t('research.benchmark.benefit_title')}\n\n{active_bench_case.expected_with_agent_benefit}")
+
+        prev_bench_id = st.session_state.get("_last_bench_preset_id", selected_case_id)
+        if selected_case_id != prev_bench_id:
+            st.session_state["bench_question_input"] = active_bench_case.question
+            st.session_state["_last_bench_preset_id"] = selected_case_id
+        elif current_locale != prev_locale:
+            prev_b_question = get_preset_question_for_locale(
+                selected_case_id, prev_locale, raw_bench_case.question
+            )
+            if st.session_state.get("bench_question_input", "") == prev_b_question:
+                st.session_state["bench_question_input"] = active_bench_case.question
 
         bench_question = st.text_area(
-            "Clinical Research / Scenario Prompt:",
+            t("research.benchmark.scenario_label"),
             value=active_bench_case.question,
             height=90,
             key="bench_question_input",
@@ -347,27 +381,29 @@ with tab_research:
         col_bench_btn, col_bench_meta = st.columns([1, 2])
         with col_bench_btn:
             run_compare_btn = st.button(
-                "🚀 Run Head-to-Head Comparison",
+                t("research.benchmark.run_button"),
                 type="primary",
                 width="stretch",
                 key="btn_run_compare",
             )
         with col_bench_meta:
             st.caption(
-                f"Comparing: **Monolithic Baseline ({params['model_info'].display_name})** vs. "
-                f"**Coordinator + Evidence & Guideline Specialists**"
+                t(
+                    "research.benchmark.comparing_caption",
+                    model=params["model_info"].display_name,
+                )
             )
 
         if run_compare_btn:
             with st.status(
-                f"Running head-to-head evaluation on '{active_bench_case.title}'...",
+                t("research.benchmark.status_running", title=active_bench_case.title),
                 expanded=True,
             ) as status:
-                st.write("1. Querying monolithic baseline model (zero-shot)...")
-                st.write("2. Orchestrating 2-subagent consensus pipeline...")
-                st.write("3. Scoring across 5 clinical reliability dimensions...")
+                st.write(t("research.benchmark.status_step1"))
+                st.write(t("research.benchmark.status_step2"))
+                st.write(t("research.benchmark.status_step3"))
                 comp_req = ComparativeAnalysisRequest(
-                    question=bench_question,
+                    question=apply_language_directive(bench_question, current_locale),
                     case_id=selected_case_id,
                     model=params["model_id"],
                     thinking_level=params.get("thinking_level"),
@@ -376,7 +412,7 @@ with tab_research:
                 )
                 comp_res = run_comparative_analysis(comp_req)
                 status.update(
-                    label="Head-to-head benchmark complete!",
+                    label=t("research.benchmark.status_complete"),
                     state="complete",
                     expanded=False,
                 )
@@ -384,7 +420,12 @@ with tab_research:
             st.divider()
 
             # Pedagogical takeaway alert banner
-            st.info(f"🎯 **Audit Conclusion:** {comp_res.pedagogical_takeaway}")
+            takeaway = (
+                active_bench_case.pedagogical_lesson
+                if current_locale == "tr" and comp_res.case_id == selected_case_id
+                else comp_res.pedagogical_takeaway
+            )
+            st.info(t("research.benchmark.conclusion_banner", takeaway=takeaway))
 
             # Side-by-side view
             render_direct_vs_agent_side_by_side(comp_res.without_agent, comp_res.with_agent)
@@ -394,10 +435,10 @@ with tab_research:
             # Sub-tabs for deep inspection
             b_tab1, b_tab2, b_tab3, b_tab4 = st.tabs(
                 [
-                    "📊 5-Dimension Audit Scorecard",
-                    "⚖️ Reconciled Consensus Matrix",
-                    "⏱️ Execution Pipeline Breakdown",
-                    "📦 Full Raw Benchmark JSON",
+                    t("research.benchmark.tabs.scorecard"),
+                    t("research.benchmark.tabs.matrix"),
+                    t("research.benchmark.tabs.breakdown"),
+                    t("research.benchmark.tabs.raw_json"),
                 ]
             )
 
@@ -414,25 +455,29 @@ with tab_research:
                 st.json(comp_res.model_dump())
 
     # 3. PICOT Query Decomposer Mode
-    elif research_mode == "⚡ PICOT Query Decomposer":
-        st.subheader("⚡ PICOT Query Decomposer (Sub-Agent 1 Utility)")
-        st.caption(
-            "Deconstructs complex, ambiguous clinical questions into standardized epidemiological "
-            "**PICOT** (Population, Intervention, Comparator, Outcomes, Timeline) search vectors."
+    elif research_mode == "picot_decomposer":
+        st.subheader(t("research.picot.subheader"))
+        st.caption(t("research.picot.caption"))
+
+        default_picot_val = (
+            "Obez yetişkinlerde ventral ve insizyonel fıtıklar için robotik ve laparoskopik "
+            "greft onarımı cerrahi alan olayları ve işe dönüş açısından güncel kanıtlar ne söylemektedir?"
+            if current_locale == "tr"
+            else (
+                "What does recent evidence say about robotic vs laparoscopic mesh repair for ventral "
+                "and incisional hernias in obese adults regarding surgical site occurrences and return to work?"
+            )
         )
 
         decom_input = st.text_area(
-            "Enter raw surgical inquiry:",
-            value=(
-                "What does recent evidence say about robotic vs laparoscopic mesh repair for ventral "
-                "and incisional hernias in obese adults regarding surgical site occurrences and return to work?"
-            ),
+            t("research.picot.input_label"),
+            value=default_picot_val,
             height=90,
             key="picot_decomp_input",
         )
 
-        if st.button("🧩 Decompose Inquiry", type="primary"):
-            with st.spinner("Extracting PICOT parameters..."):
+        if st.button(t("research.picot.run_button"), type="primary"):
+            with st.spinner(t("research.picot.spinner")):
                 decomp_res = local_service.decompose_picot(
                     PICOTDecomposeRequest(
                         question=decom_input, model=params["model_id"], mock_mode=True
@@ -441,44 +486,45 @@ with tab_research:
 
             c1, c2 = st.columns(2)
             with c1:
-                st.info(f"**👥 Population:**\n{decomp_res.population}")
-                st.success(f"**💉 Intervention:**\n{decomp_res.intervention}")
-                st.warning(f"**⚖️ Comparator:**\n{decomp_res.comparator}")
+                st.info(f"{t('research.picot.population')}\n{decomp_res.population}")
+                st.success(f"{t('research.picot.intervention')}\n{decomp_res.intervention}")
+                st.warning(f"{t('research.picot.comparator')}\n{decomp_res.comparator}")
             with c2:
-                st.info("**🎯 Outcomes:**\n" + "\n".join([f"- {o}" for o in decomp_res.outcomes]))
-                st.caption(f"**⏱️ Time Range:** {decomp_res.time_range}")
+                st.info(f"{t('research.picot.outcomes')}\n" + "\n".join([f"- {o}" for o in decomp_res.outcomes]))
+                st.caption(t("research.picot.timeline", time_range=decomp_res.time_range))
                 st.markdown(
-                    "**🔍 Keyword Vectors:** "
+                    f"{t('research.picot.keywords')} "
                     + " ".join([f"`{k}`" for k in decomp_res.search_keywords])
                 )
 
     # 4. Specialist Deep-Dive Mode
-    elif research_mode == "📚 Specialist Deep-Dive":
-        st.subheader("📚 Specialist Deep-Dive (Direct Sub-Agent Query)")
-        st.caption(
-            "Query Sub-Agent 1 (Literature Evidence) or Sub-Agent 2 (Society Guidelines) in isolation."
-        )
+    elif research_mode == "specialist_deep_dive":
+        st.subheader(t("research.specialist.subheader"))
+        st.caption(t("research.specialist.caption"))
 
         spec_mode = st.segmented_control(
-            "Target Specialist Sub-Agent:",
-            [
-                "Sub-Agent 1: Evidence Specialist (PubMed/RCTs)",
-                "Sub-Agent 2: Guideline Specialist (Societies)",
-            ],
-            default="Sub-Agent 1: Evidence Specialist (PubMed/RCTs)",
+            t("research.specialist.target_label"),
+            ["evidence", "guideline"],
+            format_func=lambda s: t(f"research.specialist.{s}"),
+            default="evidence",
         )
 
+        default_spec_q = (
+            "Elektif kolorektal cerrahide prehabilitasyon"
+            if current_locale == "tr"
+            else "Prehabilitation in elective colorectal surgery"
+        )
         spec_query = st.text_input(
-            "Target Query:",
-            value="Prehabilitation in elective colorectal surgery",
+            t("research.specialist.query_label"),
+            value=default_spec_q,
             key="spec_query_input",
         )
 
-        if st.button("🔎 Query Specialist", type="primary"):
-            with st.spinner("Querying specialist agent..."):
-                is_evid = "Evidence Specialist" in (spec_mode or "")
+        if st.button(t("research.specialist.run_button"), type="primary"):
+            with st.spinner(t("research.specialist.spinner")):
+                is_evid = spec_mode == "evidence"
                 req = MultiAgentConsensusRequest(
-                    question=spec_query,
+                    question=apply_language_directive(spec_query, current_locale),
                     model=params["model_id"],
                     enable_evidence_agent=is_evid,
                     enable_guideline_agent=not is_evid,
@@ -489,13 +535,13 @@ with tab_research:
                 spec_resp = run_multiagent(req)
 
             if is_evid:
-                st.markdown(spec_resp.evidence_findings.get("summary", "No findings."))
+                st.markdown(spec_resp.evidence_findings.get("summary", t("research.specialist.no_findings")))
                 for s in spec_resp.evidence_findings.get("key_study_findings", []):
                     st.markdown(
                         f"- **[{s.get('study_title')}]({s.get('url')})** — *{s.get('evidence_type')}* ({s.get('year')})"
                     )
             else:
-                st.markdown(spec_resp.guideline_findings.get("summary", "No findings."))
+                st.markdown(spec_resp.guideline_findings.get("summary", t("research.specialist.no_findings")))
                 for g in spec_resp.guideline_findings.get("guideline_statements", []):
                     st.markdown(
                         f"- **[{g.get('organization')} — {g.get('guideline_title')}]({g.get('url')})** ({g.get('year')})"
@@ -506,31 +552,27 @@ with tab_research:
 # TAB 2: Multimodal Vision & Video Studio
 # -----------------------------------------------------------------------------
 with tab_multimodal:
-    st.subheader("🖼️ Multimodal Vision & Video Studio")
-    st.caption(
-        "Demonstrates multimodal vision-language understanding on static radiographs, "
-        "surgical schematics (e.g., Strasberg Critical View of Safety), and dynamic echocardiogram / ultrasound video clips."
-    )
+    st.subheader(t("multimodal.subheader"))
+    st.caption(t("multimodal.caption"))
 
     media_mode = st.segmented_control(
         "Multimodal Inspection Mode:",
-        options=[
-            "🖼️ Static Vision & Schematics",
-            "🎬 Dynamic Ultrasound & Video",
-        ],
-        default="🖼️ Static Vision & Schematics",
+        options=["static_vision", "dynamic_video"],
+        format_func=lambda m: t(f"multimodal.modes.{m}"),
+        default="static_vision",
         label_visibility="collapsed",
     )
 
-    if media_mode == "🖼️ Static Vision & Schematics":
+    if media_mode == "static_vision":
         vis_left, vis_right = st.columns([1, 1])
 
         with vis_left:
-            st.markdown("#### 1. Image Source")
+            st.markdown(t("multimodal.step1_image"))
             image_source = st.segmented_control(
                 "Select Image Source:",
-                ["Preset Clinical Imagery & Schematics", "Upload Custom Image"],
-                default="Preset Clinical Imagery & Schematics",
+                ["preset", "upload"],
+                format_func=lambda s: t(f"multimodal.image_sources.{s}"),
+                default="preset",
                 key="vis_img_source",
             )
 
@@ -539,17 +581,25 @@ with tab_multimodal:
             image_mime = "image/jpeg"
             active_preset_id: Optional[str] = None
             preset_obj: Optional[Any] = None
+            raw_preset_obj: Optional[Any] = None
 
-            if image_source == "Preset Clinical Imagery & Schematics":
-                preset_options = {p.id: f"{p.title} ({p.filename})" for p in preset_images}
+            if image_source == "preset":
+                preset_options = [p.id for p in preset_images]
+
+                def format_preset_img(pid: str) -> str:
+                    raw_p = next(p for p in preset_images if p.id == pid)
+                    loc_p = get_localized_preset_image(raw_p, current_locale)
+                    return f"{loc_p.title} ({loc_p.filename})"
+
                 selected_preset_id = st.selectbox(
-                    "Choose Preset Image:",
-                    options=list(preset_options.keys()),
-                    format_func=lambda x: preset_options[x],
+                    t("multimodal.choose_preset_image"),
+                    options=preset_options,
+                    format_func=format_preset_img,
                     key="vis_preset_select",
                 )
                 image_bytes = local_service.get_preset_image_bytes(selected_preset_id)
-                preset_obj = next(p for p in preset_images if p.id == selected_preset_id)
+                raw_preset_obj = next(p for p in preset_images if p.id == selected_preset_id)
+                preset_obj = get_localized_preset_image(raw_preset_obj, current_locale)
                 active_preset_id = selected_preset_id
                 image_filename = preset_obj.filename
                 guessed_mime, _ = mimetypes.guess_type(preset_obj.filename)
@@ -557,7 +607,7 @@ with tab_multimodal:
                 st.caption(f"📝 {preset_obj.description}")
             else:
                 uploaded_file = st.file_uploader(
-                    "Upload Medical / Surgical Image (PNG, JPG, WEBP):",
+                    t("multimodal.upload_image_label"),
                     type=["png", "jpg", "jpeg", "webp"],
                     key="vis_file_uploader",
                 )
@@ -570,57 +620,87 @@ with tab_multimodal:
                 pil_img = Image.open(io.BytesIO(image_bytes))
                 st.image(
                     pil_img,
-                    caption=f"Visual Input: {image_filename} ({pil_img.width}x{pil_img.height} px, {len(image_bytes) / 1024:.1f} KB)",
+                    caption=t(
+                        "multimodal.visual_input_caption",
+                        filename=image_filename,
+                        w=pil_img.width,
+                        h=pil_img.height,
+                        kb=len(image_bytes) / 1024,
+                    ),
                     width="stretch",
                 )
 
         with vis_right:
-            st.markdown("#### 2. Prompt & Inquiry")
+            st.markdown(t("multimodal.step2_image"))
 
             # Dynamic prompts based on selected preset image
             if preset_obj and getattr(preset_obj, "suggested_prompts", None):
-                quick_prompts = list(preset_obj.suggested_prompts) + ["Custom User Prompt..."]
+                quick_prompts = list(preset_obj.suggested_prompts) + [t("multimodal.custom_prompt_option")]
             else:
                 quick_prompts = [
-                    "Describe only the observable visual anatomical and radiological features in this image.",
-                    "Detail the key findings, margins, alignment, and technical aspects visible.",
-                    "Custom User Prompt...",
+                    (
+                        "Bu görüntüde yalnızca gözlemlenebilir görsel anatomik ve radyolojik özellikleri tanımlayın."
+                        if current_locale == "tr"
+                        else "Describe only the observable visual anatomical and radiological features in this image."
+                    ),
+                    (
+                        "Görünür temel bulguları, sınırları, dizilimi ve teknik hususları ayrıntılandırın."
+                        if current_locale == "tr"
+                        else "Detail the key findings, margins, alignment, and technical aspects visible."
+                    ),
+                    t("multimodal.custom_prompt_option"),
                 ]
 
             selected_prompt_template = st.selectbox(
-                "Quick Prompt Presets:",
+                t("multimodal.quick_prompts_image"),
                 options=quick_prompts,
                 index=0,
                 key="vis_prompt_select",
             )
 
-            if selected_prompt_template == "Custom User Prompt...":
-                default_prompt_text = "What anatomical structures and radiological findings are visible?"
+            if selected_prompt_template == t("multimodal.custom_prompt_option"):
+                default_prompt_text = (
+                    "Hangi anatomik yapılar ve radyolojik bulgular görünmektedir?"
+                    if current_locale == "tr"
+                    else "What anatomical structures and radiological findings are visible?"
+                )
             else:
                 default_prompt_text = selected_prompt_template
 
+            prev_vis_id = st.session_state.get("_last_vis_preset_id", active_preset_id)
+            if active_preset_id != prev_vis_id:
+                st.session_state["vis_user_prompt"] = default_prompt_text
+                st.session_state["_last_vis_preset_id"] = active_preset_id
+            elif current_locale != prev_locale and raw_preset_obj:
+                prev_prompts = get_localized_preset_image(raw_preset_obj, prev_locale).suggested_prompts
+                curr_val = st.session_state.get("vis_user_prompt", "")
+                if curr_val in prev_prompts and preset_obj and preset_obj.suggested_prompts:
+                    idx = prev_prompts.index(curr_val)
+                    if idx < len(preset_obj.suggested_prompts):
+                        st.session_state["vis_user_prompt"] = preset_obj.suggested_prompts[idx]
+
             user_prompt = st.text_area(
-                "Inquiry Prompt:",
+                t("multimodal.inquiry_prompt_label"),
                 value=default_prompt_text,
                 height=130,
                 key="vis_user_prompt",
             )
 
-            st.caption("🔒 Safety: Responses are strictly educational and non-diagnostic.")
+            st.caption(t("multimodal.safety_image"))
 
             run_multimodal_btn = st.button(
-                "🚀 Run Vision Analysis", type="primary", width="stretch"
+                t("multimodal.run_image_button"), type="primary", width="stretch"
             )
 
         if run_multimodal_btn:
             if not image_bytes:
-                st.error("Please provide or select an image asset first.")
+                st.error(t("multimodal.error_no_image"))
             else:
                 with st.spinner(
-                    f"Analyzing visual features using {params['model_info'].display_name}..."
+                    t("multimodal.spinner_image", model=params["model_info"].display_name)
                 ):
                     req = MultimodalInquiryRequest(
-                        prompt=user_prompt,
+                        prompt=apply_language_directive(user_prompt, current_locale),
                         image_base64=base64.b64encode(image_bytes).decode("utf-8"),
                         image_mime_type=image_mime,
                         preset_image_id=active_preset_id,
@@ -636,29 +716,33 @@ with tab_multimodal:
 
                 st.divider()
                 resp_tab1, resp_tab2, resp_tab3 = st.tabs(
-                    ["📝 Observation & Analysis", "⚙️ Generation Parameters", "📦 Raw JSON Payload"]
+                    [
+                        t("multimodal.tabs.observation"),
+                        t("multimodal.tabs.parameters"),
+                        t("multimodal.tabs.payload"),
+                    ]
                 )
 
                 with resp_tab1:
                     st.markdown(vis_resp.text)
                     if vis_resp.visual_elements_detected:
-                        st.markdown("**Detected Anatomical Features:**")
+                        st.markdown(t("multimodal.detected_features"))
                         st.write(", ".join([f"`{el}`" for el in vis_resp.visual_elements_detected]))
                     st.caption(
-                        f"⏱️ Latency: **{vis_resp.latency_ms:.1f} ms** | Model: **{vis_resp.model}**"
+                        t("multimodal.latency_caption", ms=vis_resp.latency_ms, model=vis_resp.model)
                     )
 
                 with resp_tab2:
                     st.markdown(
                         f"""
-                        - **Model ID:** `{vis_resp.model}`
-                        - **Latency:** `{vis_resp.latency_ms} ms`
-                        - **Estimated Tokens:** `{vis_resp.token_estimate}`
-                        - **Thinking Level:** `{params.get("thinking_level") or "N/A"}`
-                        - **Thinking Budget:** `{params.get("thinking_budget") if params.get("thinking_budget") is not None else "N/A"}`
-                        - **Temperature:** `{params["temperature"]}`
-                        - **Top-P:** `{params["top_p"]}`
-                        - **Max Tokens:** `{params["max_output_tokens"]}`
+                        {t("multimodal.param_model_id", model=vis_resp.model)}
+                        {t("multimodal.param_latency", ms=vis_resp.latency_ms)}
+                        {t("multimodal.param_tokens", tokens=vis_resp.token_estimate)}
+                        {t("multimodal.param_thinking_level", level=params.get("thinking_level") or "N/A")}
+                        {t("multimodal.param_thinking_budget", budget=params.get("thinking_budget") if params.get("thinking_budget") is not None else "N/A")}
+                        {t("multimodal.param_temperature", temp=params["temperature"])}
+                        {t("multimodal.param_top_p", top_p=params["top_p"])}
+                        {t("multimodal.param_max_tokens", max_tokens=params["max_output_tokens"])}
                         """
                     )
                     st.code(user_prompt, language="markdown")
@@ -666,15 +750,16 @@ with tab_multimodal:
                 with resp_tab3:
                     st.json(vis_resp.model_dump())
 
-    elif media_mode == "🎬 Dynamic Ultrasound & Video":
+    elif media_mode == "dynamic_video":
         vid_left, vid_right = st.columns([1, 1])
 
         with vid_left:
-            st.markdown("#### 1. Video Source")
+            st.markdown(t("multimodal.step1_video"))
             video_source = st.segmented_control(
                 "Select Video Source:",
-                ["Preset Clinical Video (Echo / Ultrasound)", "Upload Custom Video"],
-                default="Preset Clinical Video (Echo / Ultrasound)",
+                ["preset", "upload"],
+                format_func=lambda s: t(f"multimodal.video_sources.{s}"),
+                default="preset",
                 key="vid_source_radio",
             )
 
@@ -683,17 +768,25 @@ with tab_multimodal:
             video_mime = "video/mp4"
             active_video_id: Optional[str] = None
             preset_vid_obj: Optional[Any] = None
+            raw_vid_obj: Optional[Any] = None
 
-            if video_source == "Preset Clinical Video (Echo / Ultrasound)":
-                preset_vid_options = {v.id: f"{v.title} ({v.filename})" for v in preset_videos}
+            if video_source == "preset":
+                preset_vid_options = [v.id for v in preset_videos]
+
+                def format_preset_vid(vid: str) -> str:
+                    raw_v = next(v for v in preset_videos if v.id == vid)
+                    loc_v = get_localized_preset_video(raw_v, current_locale)
+                    return f"{loc_v.title} ({loc_v.filename})"
+
                 selected_vid_id = st.selectbox(
-                    "Choose Preset Video:",
-                    options=list(preset_vid_options.keys()),
-                    format_func=lambda x: preset_vid_options[x],
+                    t("multimodal.choose_preset_video"),
+                    options=preset_vid_options,
+                    format_func=format_preset_vid,
                     key="vid_preset_select",
                 )
                 video_bytes = local_service.get_preset_video_bytes(selected_vid_id)
-                preset_vid_obj = next(v for v in preset_videos if v.id == selected_vid_id)
+                raw_vid_obj = next(v for v in preset_videos if v.id == selected_vid_id)
+                preset_vid_obj = get_localized_preset_video(raw_vid_obj, current_locale)
                 active_video_id = selected_vid_id
                 video_filename = preset_vid_obj.filename
                 guessed_mime, _ = mimetypes.guess_type(preset_vid_obj.filename)
@@ -701,7 +794,7 @@ with tab_multimodal:
                 st.caption(f"📝 {preset_vid_obj.description}")
             else:
                 uploaded_vid = st.file_uploader(
-                    "Upload Medical Video Clip (MP4, WEBM, MOV - max 20MB):",
+                    t("multimodal.upload_video_label"),
                     type=["mp4", "webm", "mov"],
                     key="vid_file_uploader",
                 )
@@ -713,46 +806,75 @@ with tab_multimodal:
             if video_bytes:
                 st.video(video_bytes, format=video_mime, autoplay=True, loop=True, muted=True)
                 st.caption(
-                    f"🎬 Clip: `{video_filename}` ({len(video_bytes) / 1024:.1f} KB, format: `{video_mime}`)"
+                    t(
+                        "multimodal.video_clip_caption",
+                        filename=video_filename,
+                        kb=len(video_bytes) / 1024,
+                        mime=video_mime,
+                    )
                 )
 
         with vid_right:
-            st.markdown("#### 2. Temporal Prompt & Inquiry")
+            st.markdown(t("multimodal.step2_video"))
 
             if preset_vid_obj and getattr(preset_vid_obj, "suggested_prompts", None):
-                quick_vid_prompts = list(preset_vid_obj.suggested_prompts) + ["Custom User Prompt..."]
+                quick_vid_prompts = list(preset_vid_obj.suggested_prompts) + [
+                    t("multimodal.custom_prompt_option")
+                ]
             else:
                 quick_vid_prompts = [
-                    "Describe the observable cardiac structures and dynamic wall motion in this echocardiogram video clip.",
-                    "Evaluate the contraction and symmetry of the left ventricle vs right ventricle across the cardiac cycle.",
-                    "Custom User Prompt...",
+                    (
+                        "Bu ekokardiyogram video klibinde gözlemlenebilir kardiyak yapıları ve dinamik duvar hareketini tanımlayın."
+                        if current_locale == "tr"
+                        else "Describe the observable cardiac structures and dynamic wall motion in this echocardiogram video clip."
+                    ),
+                    (
+                        "Kardiyak döngü boyunca sol ventrikül ile sağ ventrikülün kasılmasını ve simetrisini değerlendirin."
+                        if current_locale == "tr"
+                        else "Evaluate the contraction and symmetry of the left ventricle vs right ventricle across the cardiac cycle."
+                    ),
+                    t("multimodal.custom_prompt_option"),
                 ]
 
             selected_vid_prompt = st.selectbox(
-                "Quick Video Prompt Presets:",
+                t("multimodal.quick_prompts_video"),
                 options=quick_vid_prompts,
                 index=0,
                 key="vid_prompt_select",
             )
 
-            if selected_vid_prompt == "Custom User Prompt...":
+            if selected_vid_prompt == t("multimodal.custom_prompt_option"):
                 default_vid_text = (
-                    "What dynamic anatomical movements and wall motion patterns are observable in this clip?"
+                    "Bu klipte hangi dinamik anatomik hareketler ve duvar hareketi paternleri gözlemlenebilir?"
+                    if current_locale == "tr"
+                    else "What dynamic anatomical movements and wall motion patterns are observable in this clip?"
                 )
             else:
                 default_vid_text = selected_vid_prompt
 
+            prev_vid_id = st.session_state.get("_last_vid_preset_id", active_video_id)
+            if active_video_id != prev_vid_id:
+                st.session_state["vid_user_prompt"] = default_vid_text
+                st.session_state["_last_vid_preset_id"] = active_video_id
+            elif current_locale != prev_locale and raw_vid_obj:
+                prev_prompts = get_localized_preset_video(raw_vid_obj, prev_locale).suggested_prompts
+                curr_val = st.session_state.get("vid_user_prompt", "")
+                if curr_val in prev_prompts and preset_vid_obj and preset_vid_obj.suggested_prompts:
+                    idx = prev_prompts.index(curr_val)
+                    if idx < len(preset_vid_obj.suggested_prompts):
+                        st.session_state["vid_user_prompt"] = preset_vid_obj.suggested_prompts[idx]
+
             user_vid_prompt = st.text_area(
-                "Temporal Inquiry Prompt:",
+                t("multimodal.temporal_prompt_label"),
                 value=default_vid_text,
                 height=130,
                 key="vid_user_prompt",
             )
 
-            st.caption("🔒 Safety: Video analysis is strictly for education/research; non-diagnostic.")
+            st.caption(t("multimodal.safety_video"))
 
             run_video_btn = st.button(
-                "🚀 Run Video Multimodal Analysis",
+                t("multimodal.run_video_button"),
                 type="primary",
                 width="stretch",
                 key="run_video_btn",
@@ -760,13 +882,13 @@ with tab_multimodal:
 
         if run_video_btn:
             if not video_bytes:
-                st.error("Please provide or select a video clip first.")
+                st.error(t("multimodal.error_no_video"))
             else:
                 with st.spinner(
-                    f"Analyzing video temporal frames using {params['model_info'].display_name}..."
+                    t("multimodal.spinner_video", model=params["model_info"].display_name)
                 ):
                     req = MultimodalInquiryRequest(
-                        prompt=user_vid_prompt,
+                        prompt=apply_language_directive(user_vid_prompt, current_locale),
                         video_base64=base64.b64encode(video_bytes).decode("utf-8"),
                         video_mime_type=video_mime,
                         preset_video_id=active_video_id,
@@ -782,29 +904,33 @@ with tab_multimodal:
 
                 st.divider()
                 v_tab1, v_tab2, v_tab3 = st.tabs(
-                    ["📝 Temporal Observation & Analysis", "⚙️ Generation Parameters", "📦 Raw JSON Payload"]
+                    [
+                        t("multimodal.tabs.temporal_observation"),
+                        t("multimodal.tabs.parameters"),
+                        t("multimodal.tabs.payload"),
+                    ]
                 )
 
                 with v_tab1:
                     st.markdown(vid_resp.text)
                     if vid_resp.visual_elements_detected:
-                        st.markdown("**Detected Dynamic Anatomical Structures:**")
+                        st.markdown(t("multimodal.detected_structures"))
                         st.write(", ".join([f"`{el}`" for el in vid_resp.visual_elements_detected]))
                     st.caption(
-                        f"⏱️ Latency: **{vid_resp.latency_ms:.1f} ms** | Model: **{vid_resp.model}**"
+                        t("multimodal.latency_caption", ms=vid_resp.latency_ms, model=vid_resp.model)
                     )
 
                 with v_tab2:
                     st.markdown(
                         f"""
-                        - **Model ID:** `{vid_resp.model}`
-                        - **Latency:** `{vid_resp.latency_ms} ms`
-                        - **Estimated Tokens:** `{vid_resp.token_estimate}`
-                        - **Thinking Level:** `{params.get("thinking_level") or "N/A"}`
-                        - **Thinking Budget:** `{params.get("thinking_budget") if params.get("thinking_budget") is not None else "N/A"}`
-                        - **Temperature:** `{params["temperature"]}`
-                        - **Top-P:** `{params["top_p"]}`
-                        - **Max Tokens:** `{params["max_output_tokens"]}`
+                        {t("multimodal.param_model_id", model=vid_resp.model)}
+                        {t("multimodal.param_latency", ms=vid_resp.latency_ms)}
+                        {t("multimodal.param_tokens", tokens=vid_resp.token_estimate)}
+                        {t("multimodal.param_thinking_level", level=params.get("thinking_level") or "N/A")}
+                        {t("multimodal.param_thinking_budget", budget=params.get("thinking_budget") if params.get("thinking_budget") is not None else "N/A")}
+                        {t("multimodal.param_temperature", temp=params["temperature"])}
+                        {t("multimodal.param_top_p", top_p=params["top_p"])}
+                        {t("multimodal.param_max_tokens", max_tokens=params["max_output_tokens"])}
                         """
                     )
                     st.code(user_vid_prompt, language="markdown")
@@ -817,43 +943,36 @@ with tab_multimodal:
 # TAB 3: API & Diagnostics
 # -----------------------------------------------------------------------------
 with tab_diagnostics:
-    st.subheader("⚙️ System Diagnostics & Backend Health")
+    st.subheader(t("diagnostics.subheader"))
 
     d_col1, d_col2 = st.columns(2)
 
     with d_col1:
-        st.markdown("#### FastAPI REST Health Check")
+        st.markdown(t("diagnostics.rest_title"))
         try:
             with httpx.Client(timeout=3.0) as client:
                 res = client.get(f"{params['fastapi_url']}/api/health")
                 if res.status_code == 200:
-                    st.success("✅ FastAPI Backend is ONLINE and responding!")
+                    st.success(t("diagnostics.rest_online"))
                     st.json(res.json())
                 else:
-                    st.warning(f"FastAPI responded with HTTP {res.status_code}")
+                    st.warning(t("diagnostics.rest_status", status=res.status_code))
         except Exception as ex:
-            st.error(
-                f"❌ FastAPI Backend is currently unreachable at `{params['fastapi_url']}` ({ex})."
-            )
-            st.caption(
-                "You can run the backend using: `uv run uvicorn app.backend.api:app --reload --port 8000`"
-            )
+            st.error(t("diagnostics.rest_offline", url=params["fastapi_url"], ex=ex))
+            st.caption(t("diagnostics.rest_run_help"))
 
     with d_col2:
-        st.markdown("#### Token Optimization & Best Practices")
-        st.info(
-            """
-            - **Zero-Token Offline Mode:** When testing locally or demonstrating UI components, keep
-              *Zero-Token Offline Mode* checked in the sidebar to prevent unnecessary Gemini API calls.
-            - **Thinking Budget:** For models like `gemini-2.5-pro` and `gemini-2.5-flash`, adjust the
-              thinking budget slider to balance response depth vs token economy.
-            - **Sub-Agent Toggles:** Disable unused sub-agents when you only need literature or guidelines.
-            """
-        )
+        st.markdown(t("diagnostics.tips_title"))
+        st.info(t("diagnostics.tips_body"))
 
-        st.markdown("#### Environment Diagnostics")
+        st.markdown(t("diagnostics.env_title"))
         has_key = bool(os.environ.get("GOOGLE_API_KEY"))
         has_proj = bool(os.environ.get("GOOGLE_CLOUD_PROJECT"))
-        st.write(f"- `GOOGLE_API_KEY`: {'Configured ✅' if has_key else 'Not set ❌'}")
-        st.write(f"- `GOOGLE_CLOUD_PROJECT`: {'Configured ✅' if has_proj else 'Not set ❌'}")
-        st.write(f"- `Active Model`: `{params['model_id']}`")
+        st.write(f"- `GOOGLE_API_KEY`: {t('diagnostics.configured') if has_key else t('diagnostics.not_set')}")
+        st.write(
+            f"- `GOOGLE_CLOUD_PROJECT`: {t('diagnostics.configured') if has_proj else t('diagnostics.not_set')}"
+        )
+        st.write(t("diagnostics.active_model", model=params["model_id"]))
+
+# Record locale at the end of execution to track subsequent transitions
+st.session_state["_last_locale"] = current_locale
