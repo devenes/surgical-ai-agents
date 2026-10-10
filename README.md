@@ -63,22 +63,22 @@ The primary architecture implements a hierarchical coordinator-specialist patter
 ```mermaid
 flowchart TD
     User["Surgeon / Clinical Researcher (User)"] -->|"Clinical Research Question"| Coord["Coordinator Agent"]
-    
+
     subgraph Multi_Agent_Core ["Specialist Agent Layer"]
         direction TB
         Coord -->|"1. Scholarly Query (PICOT)"| Evid["Evidence Specialist"]
         Coord -->|"2. Guideline Query (PICOT)"| Guide["Guideline Specialist"]
-        
+
         Evid -->|"Grounding Query"| Search1["Google Search Grounding / URL Context"]
         Guide -->|"Grounding Query"| Search2["Google Search Grounding / URL Context"]
-        
+
         Search1 -->|"Verified RCTs & Meta-analyses"| Evid
         Search2 -->|"Verified Society Guidelines"| Guide
     end
-    
+
     Evid -->|"Structured Literature Findings"| Coord
     Guide -->|"Structured Guideline Findings"| Coord
-    
+
     Coord -->|"Reconcile Consensus & Divergence"| Brief["Structured Evidence Brief<br/>(agents/coordinator/output-schema.json)"]
 ```
 
@@ -159,102 +159,6 @@ A standalone demonstration is located in [`multimodal-demo/`](multimodal-demo/):
 
 ---
 
-## 🛡️ Safety Boundaries
-
-> [!CAUTION]
-> **Strict Clinical Guardrails & Disclaimers**:
-> - **No Real Patient Data / PHI**: Entering medical record numbers, patient initials, surgical dates, or identifiable patient records is strictly prohibited.
-> - **No Patient-Specific Clinical Advice**: The system must never make diagnostic, treatment, operative timing, or drug-dosing decisions for an individual patient.
-> - **Automatic Safety Refusal**: When patient-specific queries are detected (e.g. *"Should I delay surgery for my 72yo patient?"*), the system refuses individualized advice and redirects to general research synthesis.
-> - **Not a Medical Device or CDSS**: This system is a workshop educational prototype and literature synthesis tool. It does NOT constitute a Clinical Decision Support System (CDSS) or medical device.
-
-*Read the complete safety documentation in [`docs/safety.md`](docs/safety.md).*
-
----
-
-## 📁 Repository Structure
-
-```text
-surgical-ai-agents/
-├── README.md                          # Project overview, architecture, and guides
-├── LICENSE                            # Apache-2.0 open-source license
-├── pyproject.toml                     # Python package metadata & dependencies (PEP 621)
-├── .env.example                       # Safe environment template (no credentials)
-├── .gitignore                         # Secret, OS, virtual environment, and cache exclusions
-│
-├── adk/                               # Programmatic ADK reference implementation
-│   ├── config.py                      # Vertex AI model initialization & environment config
-│   ├── schemas.py                     # Pydantic models matching output-schema.json
-│   ├── run.py                         # CLI execution runner (python -m adk.run)
-│   ├── eval.py                        # 6-dimension evaluation test runner
-│   ├── coordinator/agent.py           # Coordinator agent factory & subagent wiring
-│   ├── evidence/agent.py              # Evidence specialist factory & search grounding
-│   └── guideline/agent.py             # Guideline specialist factory & search grounding
-│
-├── agents/                            # Multi-agent prompt instructions & schemas
-│   ├── agent-studio/                  # Agent Studio instructions, checklists & safety policy
-│   ├── coordinator/                   # Coordinator instructions & output-schema.json
-│   ├── evidence/                      # Evidence specialist instructions & output-schema.json
-│   └── guideline/                     # Guideline specialist instructions & output-schema.json
-│
-├── workshop/                          # Complete 60-minute workshop package
-│   ├── README.md                      # Workshop package overview
-│   ├── presenter-runbook.md           # Scripted minute-by-minute presenter guide (00–60m)
-│   ├── participant-guide.md           # Attendee worksheet (PICOT framing, safety rules)
-│   ├── demo-prompts.md                # Curated benchmark prompts & prompt transformations
-│   ├── storyboard.md                  # Conceptual cognitive journey
-│   ├── troubleshooting.md             # Common classroom failure modes & rapid fixes
-│   └── fallback-demo.md               # 4-tier contingency plan (A: single agent, B: cached, C: ADK, D: canvas)
-│
-├── multimodal-demo/                   # Supplemental 5-minute multimodal demonstration
-│   ├── README.md                      # Multimodal package boundary notice
-│   ├── adk_multimodal_example.py      # Standalone GenAI vision reference script
-│   ├── prompt.md                      # Standardized two-stage observation prompts
-│   ├── safety.md                      # Non-diagnostic multimodal safety policy
-│   ├── presenter-script.md            # Presenter talking points and sequence
-│   └── assets/                        # Synthetic, CC0/Apache-2.0 anatomical diagrams (Zero PHI)
-│
-├── docs/                              # Technical documentation & baseline manifests
-│   ├── architecture.md                # Detailed architecture and surface boundaries
-│   ├── google-cloud-setup.md          # Google Cloud setup, IAM, and ADC instructions
-│   ├── model-baseline.md              # Gemini 3.8 Flash baseline & location specifications
-│   ├── safety.md                      # Detailed clinical safety policies and disclaimers
-│   ├── environment.md                 # Local development environment report
-│   └── agent-studio-setup.md          # Step-by-step Agent Studio setup instructions
-│
-├── evaluations/                       # Evaluation framework & benchmarks
-│   ├── evalset.json                   # 16-case evaluation benchmark dataset
-│   ├── test-cases.yaml                # Executable evaluation test cases (8 normal, 8 edge)
-│   └── results/                       # Recorded evaluation benchmark runs
-│
-├── examples/                          # Reference outputs & verified evidence briefs
-│   └── research-questions/
-│       ├── colorectal-prehabilitation.md
-│       ├── colorectal-prehabilitation-gemini-3-8.json
-│       └── colorectal-prehabilitation-live-example.json
-│
-├── tests/                             # Unit and integration test suites
-│   ├── test_unit_schemas.py           # Offline unit tests for JSON schemas & Pydantic models
-│   ├── test_unit_agents.py            # Offline unit tests for agent construction & wiring
-│   └── test_integration_live.py       # Live integration tests (requires active Vertex AI ADC)
-│
-├── backup/                            # Historical exploratory prototypes & draft archives
-│   └── README.md                      # Catalog of archived experimental workflows
-│
-└── app/                               # Lightweight Web UI (FastAPI + Streamlit)
-    ├── README.md                      # Web UI architecture and component documentation
-    ├── cli.py                         # Unified launcher (python -m app.cli)
-    ├── backend/                       # FastAPI REST backend (/docs Swagger OpenAPI)
-    │   ├── api.py                     # API routes (/api/health, /api/models, /api/multimodal, etc.)
-    │   ├── schemas.py                 # Pydantic validation contracts
-    │   └── service.py                 # AppService coordinating GenAI SDK & zero-token mock
-    └── frontend/                      # Streamlit interactive application
-        ├── main.py                    # Multi-tab dashboard (Vision, Multi-Agent, PICOT)
-        └── components.py              # Visual timeline, consensus matrix, and controls
-```
-
----
-
 ## 🖥️ Interactive Web UI (FastAPI + Streamlit)
 
 A lightweight interactive web application is available in [`app/`](app/):
@@ -268,25 +172,19 @@ A lightweight interactive web application is available in [`app/`](app/):
 # Option 1: Launch both FastAPI and Streamlit concurrently (Recommended)
 uv run python -m app.cli all
 
-# Option 2: Launch FastAPI backend only (http://127.0.0.1:8000/docs)
-uv run python -m app.cli backend --backend-port 8000
-
-# Option 3: Launch Streamlit frontend only (http://127.0.0.1:8501)
+# Option 2: Launch Streamlit frontend only (http://127.0.0.1:8501)
 uv run python -m app.cli frontend --frontend-port 8501
 ```
 
-*For comprehensive setup details and troubleshooting, see the [Local UI Setup Guide](docs/local-ui-setup.md) and [Windows Setup Guide](docs/windows-setup-guide.md).*
+*For comprehensive setup details and troubleshooting, see the [Local UI Setup Guide](docs/local-ui-setup.md).*
 
 ---
 
 ## 🚀 Quick Start
 
-> 🪟 **Windows Users**: Check the dedicated [Windows Setup & Execution Guide](docs/windows-setup-guide.md) for step-by-step PowerShell/CMD setup, activation scripts, and troubleshooting.
-
 ### Prerequisites
-- Python 3.10+ (tested on Python 3.12)
-- Google Cloud Project with Vertex AI API enabled (for live mode; not needed for offline mode)
-- Google Cloud Application Default Credentials (`gcloud auth application-default login`)
+- Python 3.10+
+- Google Cloud Project with Vertex AI API enabled
 
 ### Installation
 
@@ -339,13 +237,10 @@ uv pip install -e ".[dev]"
 ```bash
 # Run with default primary research question (Colorectal Prehabilitation)
 .venv/bin/python -m adk.run
-
 # Run with a custom surgical research question
 .venv/bin/python -m adk.run "What clinical trial evidence exists regarding ICG fluorescence for anastomotic leak prevention?"
-
 # Save structured JSON brief to disk
 .venv/bin/python -m adk.run --output brief.json
-
 # Test patient-specific safety boundary refusal
 .venv/bin/python -m adk.run "My 72-year-old patient has an albumin of 2.8. Should I delay resection for 3 weeks?"
 ```
@@ -398,15 +293,6 @@ All workshop presentation, facilitation, and troubleshooting documents are organ
 
 ---
 
-## ⚠️ Known Limitations
-
-1. **Workshop POC Scope**: Designed as an educational prototype; not intended as an autonomous diagnostic system or clinical decision engine.
-2. **Search Grounding Latency**: Real-time multi-agent web retrieval can take 30–60 seconds depending on external journal portal response times.
-3. **Paywalled Literature**: Web grounding inspects open-access abstracts, trial registries, and guideline portals; full-text extraction of paywalled articles depends on publisher access.
-4. **Agent Studio UI Variation**: Console interface layouts and model pickers in Google Cloud Agent Studio may vary across regions and updates.
-
----
-
 ## 🗺️ Roadmap
 
 - [ ] **Phase 4A - Institutional RAG**: Integration with Vertex AI Search for private hospital clinical pathways and local antibiograms.
@@ -415,6 +301,13 @@ All workshop presentation, facilitation, and troubleshooting documents are organ
 
 ---
 
-## 📄 License
+## 🛡️ Safety Boundaries
 
-This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
+> [!CAUTION]
+> **Strict Clinical Guardrails & Disclaimers**:
+> - **No Real Patient Data / PHI**: Entering medical record numbers, patient initials, surgical dates, or identifiable patient records is strictly prohibited.
+> - **No Patient-Specific Clinical Advice**: The system must never make diagnostic, treatment, operative timing, or drug-dosing decisions for an individual patient.
+> - **Automatic Safety Refusal**: When patient-specific queries are detected (e.g. *"Should I delay surgery for my 72yo patient?"*), the system refuses individualized advice and redirects to general research synthesis.
+> - **Not a Medical Device or CDSS**: This system is a workshop educational prototype and literature synthesis tool. It does NOT constitute a Clinical Decision Support System (CDSS) or medical device.
+
+*Read the complete safety documentation in [`docs/safety.md`](docs/safety.md).*
