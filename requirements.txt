@@ -20,7 +20,7 @@ attrs==26.1.0
     #   referencing
 authlib==1.8.0
     # via google-adk
-certifi==2026.7.22
+certifi==2026.10.19
     # via
     #   httpcore
     #   httpx
@@ -100,7 +100,7 @@ numpy==2.5.3
     #   pandas
     #   pydeck
     #   streamlit
-opentelemetry-api==1.42.1
+opentelemetry-api==1.45.1
     # via
     #   google-adk
     #   opentelemetry-sdk
